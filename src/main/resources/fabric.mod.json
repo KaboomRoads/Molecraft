@@ -4,7 +4,10 @@
   "version": "${version}",
   "name": "${mod_name}",
   "description": "the bing",
-  "authors": [],
+  "authors": [
+    "KaboomRoads",
+    "MisterItems"
+  ],
   "contact": {},
   "license": "GPLv3",
   "icon": "assets/molecraft/icon.png",
