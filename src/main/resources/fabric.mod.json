@@ -14,10 +14,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-datagen": [
-      "com.kaboomroads.molecraft.client.data.MolecraftDataGenerator"
-    ],
-    "client": [
-      "com.kaboomroads.molecraft.client.MolecraftClient"
+      "com.kaboomroads.molecraft.data.MolecraftDataGenerator"
     ],
     "main": [
       "com.kaboomroads.molecraft.Molecraft"
@@ -25,11 +22,7 @@
   },
   "accessWidener": "${modid}.accesswidener",
   "mixins": [
-    "${modid}.mixins.json",
-    {
-      "config": "${modid}.client.mixins.json",
-      "environment": "client"
-    }
+    "${modid}.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",

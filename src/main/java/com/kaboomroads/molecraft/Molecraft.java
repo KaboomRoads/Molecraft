@@ -1,11 +1,9 @@
 package com.kaboomroads.molecraft;
 
-import com.kaboomroads.molecraft.init.ModAttributes;
-import com.kaboomroads.molecraft.init.ModBlocks;
-import com.kaboomroads.molecraft.init.ModEntityDataSerializers;
-import com.kaboomroads.molecraft.init.ModItems;
+import com.kaboomroads.molecraft.command.MolecraftCommands;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import org.slf4j.Logger;
 
 public class Molecraft implements ModInitializer {
@@ -13,20 +11,6 @@ public class Molecraft implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        ModAttributes.init();
-        ModEntityDataSerializers.init();
-        ModItems.init();
-        ModBlocks.init();
-//        try {
-//            LOGGER.info("Loading init classes from mod \"" + ModConstants.MOD_ID + "\"");
-//            for (ClassPath.ClassInfo classInfo : ClassPath.from(ClassLoader.getSystemClassLoader()).getAllClasses()) {
-//                if (classInfo.getPackageName().equalsIgnoreCase(getClass().getPackageName() + ".init")) {
-//                    classInfo.load();
-//                    LOGGER.info(classInfo.getName());
-//                }
-//            }
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+        CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> MolecraftCommands.register(dispatcher));
     }
 }

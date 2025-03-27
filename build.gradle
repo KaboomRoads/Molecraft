@@ -15,7 +15,6 @@ loom {
     mods {
         "molecraft" {
             sourceSet sourceSets.main
-            sourceSet sourceSets.client
         }
     }
     accessWidenerPath = file("src/main/resources/${modid}.accesswidener")
@@ -23,7 +22,7 @@ loom {
 
 fabricApi {
     configureDataGeneration() {
-        client = true
+        client = false
     }
 }
 

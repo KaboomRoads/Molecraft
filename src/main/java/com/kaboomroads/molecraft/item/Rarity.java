@@ -18,6 +18,6 @@ public enum Rarity {
     public final Component name;
 
     Rarity(MutableComponent name) {
-        this.name = name.withStyle(ChatFormatting.BOLD);
+        this.name = name;
     }
 }
