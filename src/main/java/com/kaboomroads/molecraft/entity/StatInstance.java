@@ -1,20 +1,22 @@
-package com.kaboomroads.molecraft.item;
+package com.kaboomroads.molecraft.entity;
 
 import java.util.HashMap;
 import java.util.Objects;
 
 public class StatInstance {
     public StatType type;
+    public double baseValue;
     public double cachedValue;
     public final HashMap<String, Double> modifiers = new HashMap<>();
 
-    public StatInstance(StatType type) {
+    public StatInstance(StatType type, double baseValue) {
         this.type = type;
+        this.baseValue = baseValue;
         addUpModifiers();
     }
 
     public void addUpModifiers() {
-        cachedValue = type.defaultValue;
+        cachedValue = baseValue;
         for (Double value : modifiers.values()) cachedValue += value;
     }
 
@@ -23,11 +25,11 @@ public class StatInstance {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StatInstance that = (StatInstance) o;
-        return type == that.type;
+        return Double.compare(baseValue, that.baseValue) == 0 && Double.compare(cachedValue, that.cachedValue) == 0 && type == that.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(type);
+        return Objects.hash(type, baseValue, cachedValue);
     }
 }

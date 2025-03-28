@@ -1,14 +1,19 @@
 package com.kaboomroads.molecraft.item;
 
 import com.kaboomroads.molecraft.ModConstants;
+import com.kaboomroads.molecraft.entity.StatType;
 import com.kaboomroads.molecraft.util.PlaceholderContents;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
@@ -23,6 +28,7 @@ import org.slf4j.Logger;
 
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.function.Function;
 
 public class MolecraftItem {
     public final String id;
@@ -33,32 +39,47 @@ public class MolecraftItem {
     public final EquipmentSlotGroup activeFor;
     public final TreeMap<StatType, Double> stats;
     public final List<Component> lore;
-    public final DataComponentPatch dataComponents;
+    public final Function<HolderLookup.Provider, DataComponentPatch> dataComponents;
     public static final ResourceLocation STATS_LOCATION = ResourceLocation.fromNamespaceAndPath(ModConstants.MOD_ID, "stats");
     public static final ResourceLocation RARITY_LOCATION = ResourceLocation.fromNamespaceAndPath(ModConstants.MOD_ID, "rarity");
     public static final Component STATS = MutableComponent.create(new PlaceholderContents(STATS_LOCATION));
     public static final Component RARITY = MutableComponent.create(new PlaceholderContents(RARITY_LOCATION));
-    public static final Codec<ItemStack> CODEC = Codec.lazyInitialized(
+    public static final Codec<MolecraftItemInstance> CODEC = Codec.lazyInitialized(
             () -> RecordCodecBuilder.create(
                     instance -> instance.group(
-                                    ExtraCodecs.optionalEmptyMap(CompoundTag.CODEC).fieldOf("molecraft_data").orElse(Optional.empty()).forGetter(itemStack -> Optional.of(itemStack.get(DataComponents.CUSTOM_DATA).getUnsafe())),
-                                    ExtraCodecs.intRange(1, 99).fieldOf("count").orElse(1).forGetter(ItemStack::getCount)
+                                    ExtraCodecs.optionalEmptyMap(CompoundTag.CODEC).fieldOf("molecraft_data").orElse(Optional.empty()).forGetter(MolecraftItemInstance::tag),
+                                    ExtraCodecs.intRange(1, 99).fieldOf("count").orElse(1).forGetter(MolecraftItemInstance::count)
                             )
-                            .apply(instance, (optional, count) -> {
-                                if (optional.isPresent()) {
-                                    MolecraftData data = MolecraftData.parse(optional.get());
-                                    if (data != null && data.exists()) {
-                                        MolecraftItem item = data.getItem();
-                                        return item.construct(count);
-                                    }
-                                }
-                                return ItemStack.EMPTY;
-                            })
+                            .apply(instance, MolecraftItemInstance::new)
             )
     );
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public MolecraftItem(String id, Component name, Rarity rarity, ItemType itemType, ItemStack base, EquipmentSlotGroup activeFor, TreeMap<StatType, Double> stats, List<Component> lore, DataComponentPatch dataComponents) {
+    public static DataResult<Tag> encode(ItemStack itemStack, HolderLookup.Provider levelRegistryAccess, Tag outputTag) {
+        CustomData customData = itemStack.get(DataComponents.CUSTOM_DATA);
+        return CODEC.encode(new MolecraftItemInstance(customData == null ? Optional.empty() : Optional.of(customData.getUnsafe()), itemStack.getCount()), levelRegistryAccess.createSerializationContext(NbtOps.INSTANCE), outputTag);
+    }
+
+    public static DataResult<Tag> encodeStart(ItemStack itemStack, HolderLookup.Provider levelRegistryAccess) {
+        CustomData customData = itemStack.get(DataComponents.CUSTOM_DATA);
+        return CODEC.encodeStart(levelRegistryAccess.createSerializationContext(NbtOps.INSTANCE), new MolecraftItemInstance(customData == null ? Optional.empty() : Optional.of(customData.getUnsafe()), itemStack.getCount()));
+    }
+
+    public static Optional<ItemStack> parse(HolderLookup.Provider lookupProvider, Tag tag) {
+        Optional<MolecraftItemInstance> optional = CODEC.parse(lookupProvider.createSerializationContext(NbtOps.INSTANCE), tag)
+                .resultOrPartial(string -> LOGGER.error("Tried to load invalid item: '{}'", string));
+        if (optional.isPresent()) {
+            MolecraftItemInstance instance = optional.get();
+            Optional<CompoundTag> optionalTag = instance.tag();
+            if (optionalTag.isPresent()) {
+                MolecraftData data = MolecraftData.parse(optionalTag.get());
+                return Optional.of(data.getItem().construct(instance.count(), lookupProvider));
+            }
+        }
+        return Optional.empty();
+    }
+
+    public MolecraftItem(String id, Component name, Rarity rarity, ItemType itemType, ItemStack base, EquipmentSlotGroup activeFor, TreeMap<StatType, Double> stats, List<Component> lore, Function<HolderLookup.Provider, DataComponentPatch> dataComponents) {
         this.id = id;
         this.name = name;
         this.rarity = rarity;
@@ -70,7 +91,7 @@ public class MolecraftItem {
         this.dataComponents = dataComponents;
     }
 
-    public ItemStack construct(int count) {
+    public ItemStack construct(int count, HolderLookup.Provider lookupProvider) {
         ItemStack itemStack = base.copyWithCount(count);
         ArrayList<Component> list = new ArrayList<>(lore.size());
         NumberFormat format = NumberFormat.getInstance();
@@ -84,7 +105,7 @@ public class MolecraftItem {
                 }
             } else deLoreify(list, component.copy());
         }
-        itemStack.applyComponents(dataComponents);
+        itemStack.applyComponents(dataComponents.apply(lookupProvider));
         itemStack.set(DataComponents.ITEM_NAME, name.copy().withStyle(rarity.name.getStyle()));
         itemStack.set(DataComponents.HIDE_ADDITIONAL_TOOLTIP, Unit.INSTANCE);
         itemStack.set(DataComponents.UNBREAKABLE, new Unbreakable(false));
@@ -100,16 +121,16 @@ public class MolecraftItem {
         list.add(color == null ? component.withStyle(ChatFormatting.WHITE) : component);
     }
 
-    public static Builder builder(String id, Component name, Rarity rarity, ItemType itemType, ItemStack base, EquipmentSlotGroup activeFor, DataComponentPatch dataComponents) {
+    public static Builder builder(String id, Component name, Rarity rarity, ItemType itemType, ItemStack base, EquipmentSlotGroup activeFor, Function<HolderLookup.Provider, DataComponentPatch> dataComponents) {
         return new Builder(id, name, rarity, itemType, base, activeFor, dataComponents);
     }
 
-    public static Builder builder(String id, String name, Rarity rarity, ItemType itemType, Item base, EquipmentSlotGroup activeFor, DataComponentPatch dataComponents) {
+    public static Builder builder(String id, String name, Rarity rarity, ItemType itemType, Item base, EquipmentSlotGroup activeFor, Function<HolderLookup.Provider, DataComponentPatch> dataComponents) {
         return builder(id, Component.literal(name), rarity, itemType, new ItemStack(base), activeFor, dataComponents);
     }
 
     public static Builder builder(String id, String name, Rarity rarity, ItemType itemType, Item base, EquipmentSlotGroup activeFor) {
-        return builder(id, Component.literal(name), rarity, itemType, new ItemStack(base), activeFor, DataComponentPatch.EMPTY);
+        return builder(id, Component.literal(name), rarity, itemType, new ItemStack(base), activeFor, provider -> DataComponentPatch.EMPTY);
     }
 
     public static class Builder {
@@ -119,11 +140,11 @@ public class MolecraftItem {
         public final ItemType itemType;
         public final ItemStack base;
         public final EquipmentSlotGroup activeFor;
-        public final DataComponentPatch dataComponents;
+        public final Function<HolderLookup.Provider, DataComponentPatch> dataComponents;
         private final TreeMap<StatType, Double> stats = new TreeMap<>();
         private final ArrayList<Component> lore = new ArrayList<>();
 
-        public Builder(String id, Component name, Rarity rarity, ItemType itemType, ItemStack base, EquipmentSlotGroup activeFor, DataComponentPatch dataComponents) {
+        public Builder(String id, Component name, Rarity rarity, ItemType itemType, ItemStack base, EquipmentSlotGroup activeFor, Function<HolderLookup.Provider, DataComponentPatch> dataComponents) {
             this.id = id;
             this.name = name;
             this.rarity = rarity;

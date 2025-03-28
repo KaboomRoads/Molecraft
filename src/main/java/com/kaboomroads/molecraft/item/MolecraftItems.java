@@ -1,5 +1,6 @@
 package com.kaboomroads.molecraft.item;
 
+import com.kaboomroads.molecraft.entity.StatType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
@@ -7,8 +8,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.equipment.ArmorMaterials;
 import net.minecraft.world.item.equipment.Equippable;
+import net.minecraft.world.item.equipment.trim.ArmorTrim;
+import net.minecraft.world.item.equipment.trim.TrimMaterials;
+import net.minecraft.world.item.equipment.trim.TrimPatterns;
 
 import java.util.HashMap;
 
@@ -46,7 +51,14 @@ public class MolecraftItems {
                     ItemType.BOOTS,
                     Items.GOLDEN_APPLE,
                     EquipmentSlotGroup.FEET,
-                    DataComponentPatch.builder().set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET).setEquipSound(ArmorMaterials.NETHERITE.equipSound()).setAsset(ArmorMaterials.NETHERITE.assetId()).build()).build()
+                    provider -> DataComponentPatch.builder()
+                            .set(DataComponents.EQUIPPABLE, Equippable.builder(EquipmentSlot.FEET)
+                                    .setEquipSound(ArmorMaterials.NETHERITE.equipSound())
+                                    .setAsset(ArmorMaterials.LEATHER.assetId()).build())
+                            .set(DataComponents.DYED_COLOR, new DyedItemColor(0x32A852, true))
+                            .set(DataComponents.MAX_STACK_SIZE, 1)
+                            .set(DataComponents.TRIM, new ArmorTrim(provider.get(TrimMaterials.COPPER).get(), provider.get(TrimPatterns.FLOW).get(), false))
+                            .build()
             )
             .stat(StatType.DAMAGE, 25.0)
             .stat(StatType.CRIT_DAMAGE, 40.0)

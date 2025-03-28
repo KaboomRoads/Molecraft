@@ -1,16 +1,18 @@
 package com.kaboomroads.molecraft.mixin;
 
+import com.kaboomroads.molecraft.entity.StatInstance;
+import com.kaboomroads.molecraft.entity.StatType;
+import com.kaboomroads.molecraft.entity.StatsMap;
 import com.kaboomroads.molecraft.item.MolecraftData;
 import com.kaboomroads.molecraft.item.MolecraftItem;
-import com.kaboomroads.molecraft.item.StatInstance;
-import com.kaboomroads.molecraft.item.StatType;
-import com.kaboomroads.molecraft.mixinimpl.MolecraftLivingEntity;
+import com.kaboomroads.molecraft.mixinimpl.ModLivingEntity;
 import com.kaboomroads.molecraft.util.MolecraftUtil;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -35,10 +37,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 @Mixin(LivingEntity.class)
-public abstract class LivingEntityMixin extends Entity implements MolecraftLivingEntity {
+public abstract class LivingEntityMixin extends Entity implements ModLivingEntity {
     @Shadow
     @Final
     private static EntityDataAccessor<Float> DATA_HEALTH_ID;
@@ -65,24 +66,21 @@ public abstract class LivingEntityMixin extends Entity implements MolecraftLivin
     }
 
     @Unique
-    private final TreeMap<StatType, StatInstance> stats = new TreeMap<>();
+    private StatsMap stats = molecraft$initStats().build();
 
-    @Inject(method = "<init>", at = @At(value = "CTOR_HEAD"))
-    private void initStats(EntityType<?> entityType, Level level, CallbackInfo ci) {
-        MolecraftUtil.initStats(stats
-                , StatType.MAX_HEALTH
-                , StatType.HEALTH_REGEN
-                , StatType.DEFENSE
-                , StatType.DAMAGE
-                , StatType.CRIT_DAMAGE
-                , StatType.CRIT_CHANCE
-                , StatType.SPELL_DAMAGE
-                , StatType.MAX_MANA
-                , StatType.MANA_REGEN
-                , StatType.BREAKING_POWER
-                , StatType.MINING_STRENGTH
-                , StatType.BRILLIANCE
-        );
+    @Override
+    public StatsMap.Builder molecraft$initStats() {
+        return new StatsMap.Builder()
+                .stat(StatType.MAX_HEALTH, 100)
+                .stat(StatType.HEALTH_REGEN, 5)
+                .stat(StatType.DEFENSE, 0)
+                .stat(StatType.DAMAGE, 5)
+                .stat(StatType.CRIT_DAMAGE, 0)
+                .stat(StatType.CRIT_CHANCE, 0)
+                .stat(StatType.SPELL_DAMAGE, 0)
+                .stat(StatType.MAX_MANA, 100)
+                .stat(StatType.MANA_REGEN, 5)
+                ;
     }
 
     @WrapMethod(method = "startUsingItem")
@@ -102,8 +100,8 @@ public abstract class LivingEntityMixin extends Entity implements MolecraftLivin
                     for (Map.Entry<StatType, Double> entry : molecraftItem.stats.entrySet()) {
                         StatType statType = entry.getKey();
                         double value = entry.getValue();
-                        if (stats.containsKey(statType)) {
-                            StatInstance statInstance = stats.get(statType);
+                        StatInstance statInstance = stats.get(statType);
+                        if (statInstance != null) {
                             HashMap<String, Double> modifiers = statInstance.modifiers;
                             modifiers.put(equipmentSlot.getSerializedName(), value);
                         }
@@ -115,7 +113,7 @@ public abstract class LivingEntityMixin extends Entity implements MolecraftLivin
 
     @Inject(method = "collectEquipmentChanges", at = @At(value = "TAIL"))
     private void addUpChanges(CallbackInfoReturnable<Map<EquipmentSlot, ItemStack>> cir) {
-        for (StatInstance statInstance : stats.values()) statInstance.addUpModifiers();
+        for (StatInstance statInstance : stats.map.values()) statInstance.addUpModifiers();
     }
 
     @Inject(method = "stopLocationBasedEffects", at = @At(value = "HEAD"))
@@ -129,8 +127,8 @@ public abstract class LivingEntityMixin extends Entity implements MolecraftLivin
                 if (group.test(slot)) {
                     for (Map.Entry<StatType, Double> entry : molecraftItem.stats.entrySet()) {
                         StatType statType = entry.getKey();
-                        if (stats.containsKey(statType)) {
-                            StatInstance statInstance = stats.get(statType);
+                        StatInstance statInstance = stats.get(statType);
+                        if (statInstance != null) {
                             HashMap<String, Double> modifiers = statInstance.modifiers;
                             modifiers.remove(slot.getSerializedName());
                         }
@@ -154,11 +152,21 @@ public abstract class LivingEntityMixin extends Entity implements MolecraftLivin
     @Inject(method = "tick", at = @At("TAIL"))
     private void inject_tick(CallbackInfo ci) {
         setHealth(getHealth());
+        if (tickCount % 5 == 0) {
+            Component component = MolecraftUtil.getEntityNameTag((LivingEntity) (Object) this);
+            setCustomName(component);
+            setCustomNameVisible(true);
+        }
     }
 
     @Override
-    public TreeMap<StatType, StatInstance> molecraft$getStats() {
+    public StatsMap molecraft$getStats() {
         return stats;
+    }
+
+    @Override
+    public void molecraft$setStats(StatsMap statsMap) {
+        stats = statsMap;
     }
 
     @Override
@@ -172,7 +180,6 @@ public abstract class LivingEntityMixin extends Entity implements MolecraftLivin
         double maxHealth = getAttributeValue(Attributes.MAX_HEALTH);
         this.molecraftHealth = Mth.clamp(health, 0.0, molecraftMaxHealth);
         entityData.set(DATA_HEALTH_ID, Mth.clamp((float) (health / molecraftMaxHealth * maxHealth), 0.0F, (float) maxHealth));
-        this.molecraftHealth = health;
     }
 
     @Override

@@ -2,7 +2,7 @@ package com.kaboomroads.molecraft.mixinimpl;
 
 import net.minecraft.core.BlockPos;
 
-public interface MolecraftServerPlayer {
+public interface ModServerPlayer {
     BlockPos molecraft$getCurrentlyMining();
 
     void molecraft$setCurrentlyMining(BlockPos pos);
