@@ -1,4 +1,4 @@
-package com.kaboomroads.molecraft.util;
+package com.kaboomroads.molecraft.mining;
 
 import net.minecraft.world.entity.player.Player;
 

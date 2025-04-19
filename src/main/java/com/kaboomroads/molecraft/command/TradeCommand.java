@@ -1,8 +1,9 @@
 package com.kaboomroads.molecraft.command;
 
-import com.kaboomroads.molecraft.menu.TradeMenu;
 import com.kaboomroads.molecraft.mixinimpl.ModPlayer;
-import com.kaboomroads.molecraft.util.TradeData;
+import com.kaboomroads.molecraft.trading.PendingTrade;
+import com.kaboomroads.molecraft.trading.TradeData;
+import com.kaboomroads.molecraft.trading.TradeMenu;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -11,13 +12,9 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.SimpleMenuProvider;
-
-import java.util.Objects;
-import java.util.UUID;
 
 public class TradeCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -65,40 +62,5 @@ public class TradeCommand {
                                         })
                         )
         );
-    }
-
-    public static class PendingTrade {
-        public final UUID sender;
-        public final UUID receiver;
-        private final Trade trade;
-        public int expireTime = 600;
-
-        public PendingTrade(UUID sender, UUID receiver, Trade trade) {
-            this.sender = sender;
-            this.receiver = receiver;
-            this.trade = trade;
-        }
-
-        public void accept(ServerLevel level) {
-            trade.accept((ServerPlayer) level.getPlayerByUUID(sender), (ServerPlayer) level.getPlayerByUUID(receiver));
-        }
-
-        @FunctionalInterface
-        public interface Trade {
-            void accept(ServerPlayer sender, ServerPlayer receiver);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            PendingTrade that = (PendingTrade) o;
-            return Objects.equals(sender, that.sender) && Objects.equals(receiver, that.receiver);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(sender, receiver);
-        }
     }
 }

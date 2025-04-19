@@ -2,14 +2,10 @@ package com.kaboomroads.molecraft.mixin;
 
 import com.kaboomroads.molecraft.entity.StatType;
 import com.kaboomroads.molecraft.entity.StatsMap;
-import com.kaboomroads.molecraft.mining.BlockType;
-import com.kaboomroads.molecraft.mining.Mining;
-import com.kaboomroads.molecraft.mining.MiningArea;
-import com.kaboomroads.molecraft.mining.Octree;
+import com.kaboomroads.molecraft.mining.*;
 import com.kaboomroads.molecraft.mixinimpl.ModLivingEntity;
 import com.kaboomroads.molecraft.mixinimpl.ModServerLevel;
 import com.kaboomroads.molecraft.mixinimpl.ModServerLevelData;
-import com.kaboomroads.molecraft.util.MiningPlayer;
 import com.kaboomroads.molecraft.util.SoundInstance;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;

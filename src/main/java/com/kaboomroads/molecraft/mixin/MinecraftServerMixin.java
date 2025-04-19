@@ -5,6 +5,7 @@ import com.kaboomroads.molecraft.util.DelayedTask;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,6 +26,7 @@ public abstract class MinecraftServerMixin {
     @Inject(method = "stopServer", at = @At("HEAD"))
     private void completeLevelTasks(CallbackInfo ci) {
         for (ServerLevel level : levels.values()) {
+            for (ServerPlayer player : level.players()) player.closeContainer();
             PriorityQueue<DelayedTask> scheduledTasks = ((ModServerLevel) level).molecraft$getScheduledTasks();
             for (DelayedTask task : scheduledTasks) task.theBigScaryEvilTaskToExecuteWhenExecutionTimeIsReached().accept(level);
             scheduledTasks.clear();

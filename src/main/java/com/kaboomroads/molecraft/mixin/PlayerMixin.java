@@ -1,12 +1,12 @@
 package com.kaboomroads.molecraft.mixin;
 
-import com.kaboomroads.molecraft.command.TradeCommand;
 import com.kaboomroads.molecraft.entity.StatType;
 import com.kaboomroads.molecraft.entity.StatsMap;
-import com.kaboomroads.molecraft.menu.TradeMenu;
 import com.kaboomroads.molecraft.mixinimpl.ModPlayer;
+import com.kaboomroads.molecraft.trading.PendingTrade;
+import com.kaboomroads.molecraft.trading.TradeData;
+import com.kaboomroads.molecraft.trading.TradeMenu;
 import com.kaboomroads.molecraft.util.MolecraftUtil;
-import com.kaboomroads.molecraft.util.TradeData;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -49,7 +49,7 @@ public abstract class PlayerMixin extends LivingEntityMixin implements ModPlayer
     private TradeData tickingTradeData = null;
     @Unique
     @Nullable
-    private TradeCommand.PendingTrade sentTrade = null;
+    private PendingTrade sentTrade = null;
     @Unique
     private long coins = 0;
     @Unique
@@ -153,12 +153,12 @@ public abstract class PlayerMixin extends LivingEntityMixin implements ModPlayer
 
     @Nullable
     @Override
-    public TradeCommand.PendingTrade molecraft$getSentTrade() {
+    public PendingTrade molecraft$getSentTrade() {
         return sentTrade;
     }
 
     @Override
-    public void molecraft$setSentTrade(TradeCommand.PendingTrade sentTrade) {
+    public void molecraft$setSentTrade(PendingTrade sentTrade) {
         this.sentTrade = sentTrade;
     }
 

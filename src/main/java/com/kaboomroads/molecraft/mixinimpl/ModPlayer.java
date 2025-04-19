@@ -1,7 +1,7 @@
 package com.kaboomroads.molecraft.mixinimpl;
 
-import com.kaboomroads.molecraft.command.TradeCommand;
-import com.kaboomroads.molecraft.util.TradeData;
+import com.kaboomroads.molecraft.trading.PendingTrade;
+import com.kaboomroads.molecraft.trading.TradeData;
 import org.jetbrains.annotations.Nullable;
 
 public interface ModPlayer {
@@ -10,9 +10,9 @@ public interface ModPlayer {
     void molecraft$setTickingTradeData(TradeData tradeData);
 
     @Nullable
-    TradeCommand.PendingTrade molecraft$getSentTrade();
+    PendingTrade molecraft$getSentTrade();
 
-    void molecraft$setSentTrade(TradeCommand.PendingTrade sentTrade);
+    void molecraft$setSentTrade(PendingTrade sentTrade);
 
     long molecraft$getCoins();
 

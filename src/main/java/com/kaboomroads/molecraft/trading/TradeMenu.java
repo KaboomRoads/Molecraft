@@ -1,4 +1,4 @@
-package com.kaboomroads.molecraft.menu;
+package com.kaboomroads.molecraft.trading;
 
 import com.kaboomroads.molecraft.item.MolecraftData;
 import com.kaboomroads.molecraft.item.MolecraftItem;
@@ -6,7 +6,6 @@ import com.kaboomroads.molecraft.mixinimpl.ModItemEntity;
 import com.kaboomroads.molecraft.mixinimpl.ModPlayer;
 import com.kaboomroads.molecraft.util.ItemUtils;
 import com.kaboomroads.molecraft.util.SignGui;
-import com.kaboomroads.molecraft.util.TradeData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -87,13 +86,6 @@ public class TradeMenu extends AbstractContainerMenu {
                             case 0:
                                 addSlot(new ButtonSlot(trueContainer, i, 0, 0, COIN_TRANSACTION, slot -> {
                                     ServerPlayer player = getPlayer();
-//                                    ServerLevel level = player.serverLevel();
-//                                    Block curBlock = null;
-//                                    for (BlockPos.MutableBlockPos cursor = player.blockPosition().mutable().setY(level.getMaxY()); curBlock == null || curBlock instanceof SignBlock; ) {
-//                                        if (!level.isInsideBuildHeight(cursor.getY())) cursor.set(cursor.getX() + 1, level.getMaxY(), cursor.getZ());
-//                                        curBlock = level.getBlockState(cursor).getBlock();
-//                                        cursor.move(Direction.DOWN);
-//                                    }
                                     Component[] messages = new Component[]{
                                             Component.empty(),
                                             Component.literal("^^^^^^^^^^^^^^^"),
@@ -181,7 +173,7 @@ public class TradeMenu extends AbstractContainerMenu {
 
     public static ItemStack createOtherConfirm(boolean confirmed) {
         ItemStack itemStack = new ItemStack((confirmed ? Items.LIME_DYE : Items.GRAY_DYE));
-        itemStack.set(DataComponents.ITEM_NAME, Component.literal(confirmed ? "Trade confirmed" : "Confirm trade"));
+        itemStack.set(DataComponents.ITEM_NAME, Component.literal(confirmed ? "Trade confirmed" : "Waiting for other side to confirm"));
         return itemStack;
     }
 

@@ -1,6 +1,5 @@
 package com.kaboomroads.molecraft.mining;
 
-import com.kaboomroads.molecraft.util.MiningPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.nbt.CompoundTag;

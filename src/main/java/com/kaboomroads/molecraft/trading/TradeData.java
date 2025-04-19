@@ -1,6 +1,5 @@
-package com.kaboomroads.molecraft.util;
+package com.kaboomroads.molecraft.trading;
 
-import com.kaboomroads.molecraft.menu.TradeMenu;
 import com.kaboomroads.molecraft.mixinimpl.ModPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -39,7 +38,7 @@ public class TradeData {
     }
 
     public int fromLeft(int index) {
-        return (index / 9) * 4 + (index % 9 % 4);
+        return index / 9 * 4 + index % 9 % 4;
     }
 
     public int right(int index) {
