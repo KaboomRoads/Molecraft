@@ -53,9 +53,6 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
     @Shadow
     public abstract float getHealth();
 
-    @Shadow
-    public abstract ItemStack getItemInHand(InteractionHand hand);
-
     @Unique
     private double molecraftHealth;
     @Unique
@@ -93,17 +90,19 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
         CustomData customData = itemStack.get(DataComponents.CUSTOM_DATA);
         if (customData != null) {
             MolecraftData molecraftData = MolecraftData.parse(customData.getUnsafe());
-            if (molecraftData.exists()) {
+            if (molecraftData != null) {
                 MolecraftItem molecraftItem = molecraftData.getItem();
-                EquipmentSlotGroup group = molecraftItem.activeFor;
-                if (group.test(equipmentSlot)) {
-                    for (Map.Entry<StatType, Double> entry : molecraftItem.stats.entrySet()) {
-                        StatType statType = entry.getKey();
-                        double value = entry.getValue();
-                        StatInstance statInstance = stats.get(statType);
-                        if (statInstance != null) {
-                            HashMap<String, Double> modifiers = statInstance.modifiers;
-                            modifiers.put(equipmentSlot.getSerializedName(), value);
+                if (molecraftItem != null) {
+                    EquipmentSlotGroup group = molecraftItem.activeFor;
+                    if (group.test(equipmentSlot)) {
+                        for (Map.Entry<StatType, Double> entry : molecraftItem.stats.entrySet()) {
+                            StatType statType = entry.getKey();
+                            double value = entry.getValue();
+                            StatInstance statInstance = stats.get(statType);
+                            if (statInstance != null) {
+                                HashMap<String, Double> modifiers = statInstance.modifiers;
+                                modifiers.put(equipmentSlot.getSerializedName(), value);
+                            }
                         }
                     }
                 }
@@ -121,16 +120,18 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData != null) {
             MolecraftData molecraftData = MolecraftData.parse(customData.getUnsafe());
-            if (molecraftData.exists()) {
+            if (molecraftData != null) {
                 MolecraftItem molecraftItem = molecraftData.getItem();
-                EquipmentSlotGroup group = molecraftItem.activeFor;
-                if (group.test(slot)) {
-                    for (Map.Entry<StatType, Double> entry : molecraftItem.stats.entrySet()) {
-                        StatType statType = entry.getKey();
-                        StatInstance statInstance = stats.get(statType);
-                        if (statInstance != null) {
-                            HashMap<String, Double> modifiers = statInstance.modifiers;
-                            modifiers.remove(slot.getSerializedName());
+                if (molecraftItem != null) {
+                    EquipmentSlotGroup group = molecraftItem.activeFor;
+                    if (group.test(slot)) {
+                        for (Map.Entry<StatType, Double> entry : molecraftItem.stats.entrySet()) {
+                            StatType statType = entry.getKey();
+                            StatInstance statInstance = stats.get(statType);
+                            if (statInstance != null) {
+                                HashMap<String, Double> modifiers = statInstance.modifiers;
+                                modifiers.remove(slot.getSerializedName());
+                            }
                         }
                     }
                 }

@@ -1,6 +1,8 @@
 package com.kaboomroads.molecraft;
 
+import com.kaboomroads.molecraft.command.MCMCommand;
 import com.kaboomroads.molecraft.command.MolecraftCommands;
+import com.kaboomroads.molecraft.command.TradeCommand;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -11,6 +13,10 @@ public class Molecraft implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> MolecraftCommands.register(dispatcher));
+        CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> {
+            MolecraftCommands.register(dispatcher);
+            MCMCommand.register(dispatcher, context);
+            TradeCommand.register(dispatcher);
+        });
     }
 }

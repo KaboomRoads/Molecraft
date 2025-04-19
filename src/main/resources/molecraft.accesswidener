@@ -6,3 +6,7 @@ accessible field net/minecraft/network/syncher/SynchedEntityData$DataItem access
 accessible class net/minecraft/server/level/ServerLevel$EntityCallbacks
 accessible method net/minecraft/world/entity/Entity getTypeName ()Lnet/minecraft/network/chat/Component;
 accessible method net/minecraft/world/entity/decoration/ArmorStand setMarker (Z)V
+accessible field net/minecraft/world/entity/item/ItemEntity target Ljava/util/UUID;
+accessible field net/minecraft/world/level/block/entity/SignBlockEntity frontText Lnet/minecraft/world/level/block/entity/SignText;
+accessible field net/minecraft/server/network/ServerCommonPacketListenerImpl connection Lnet/minecraft/network/Connection;
+accessible field net/minecraft/network/Connection channel Lio/netty/channel/Channel;

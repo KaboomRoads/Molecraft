@@ -36,6 +36,9 @@ public class MolecraftItems {
             .stat(StatType.SPELL_DAMAGE, 40.0)
             .stat(StatType.MAX_MANA, 120.0)
             .stat(StatType.MANA_REGEN, 10.0)
+            .stat(StatType.BREAKING_POWER, 10.0)
+            .stat(StatType.MINING_STRENGTH, 50.0)
+            .stat(StatType.BRILLIANCE, 12.0)
             .lore("The Bing...", ChatFormatting.DARK_GRAY)
             .lore(MolecraftItem.STATS)
             .lore()
@@ -90,6 +93,7 @@ public class MolecraftItems {
             .lore(MolecraftItem.STATS)
             .lore()
             .lore(MolecraftItem.RARITY)
+            .soulbound()
             .build());
 
     public static MolecraftItem register(MolecraftItem item) {

@@ -4,8 +4,10 @@ import com.kaboomroads.molecraft.entity.MolecraftEntities;
 import com.kaboomroads.molecraft.entity.MolecraftEntity;
 import com.kaboomroads.molecraft.item.MolecraftItem;
 import com.kaboomroads.molecraft.item.MolecraftItems;
+import com.kaboomroads.molecraft.mixinimpl.ModPlayer;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -87,6 +89,53 @@ public class MolecraftCommands {
                                                         )
                                         )
                         )
+        );
+        dispatcher.register(
+                Commands.literal("molecraftcoins")
+                        .requires(commandSourceStack -> commandSourceStack.hasPermission(2))
+                        .then(
+                                Commands.argument("targets", EntityArgument.players())
+                                        .then(Commands.literal("add")
+                                                .then(
+                                                        Commands.argument("amount", LongArgumentType.longArg())
+                                                                .executes(
+                                                                        context -> {
+                                                                            ServerPlayer player = context.getSource().getPlayer();
+                                                                            if (player != null) {
+                                                                                ((ModPlayer) player).molecraft$setCoins(((ModPlayer) player).molecraft$getCoins() + LongArgumentType.getLong(context, "amount"));
+                                                                                return 1;
+                                                                            }
+                                                                            return 0;
+                                                                        }
+                                                                )
+                                                )
+                                        )
+                                        .then(Commands.literal("set")
+                                                .then(
+                                                        Commands.argument("amount", LongArgumentType.longArg())
+                                                                .executes(
+                                                                        context -> {
+                                                                            ServerPlayer player = context.getSource().getPlayer();
+                                                                            if (player != null) {
+                                                                                ((ModPlayer) player).molecraft$setCoins(LongArgumentType.getLong(context, "amount"));
+                                                                                return 1;
+                                                                            }
+                                                                            return 0;
+                                                                        }
+                                                                )
+                                                )
+                                        )
+                        )
+        );
+        dispatcher.register(
+                Commands.literal("ce")
+                        .requires(commandSourceStack -> commandSourceStack.hasPermission(2))
+                        .executes(context -> {
+                            Commands commands = context.getSource().getServer().getCommands();
+                            String command = "kill @e[type=!minecraft:player]";
+                            commands.performCommand(commands.getDispatcher().parse(command, context.getSource()), command);
+                            return 1;
+                        })
         );
     }
 

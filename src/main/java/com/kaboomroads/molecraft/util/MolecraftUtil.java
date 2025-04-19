@@ -44,7 +44,6 @@ public class MolecraftUtil {
                     livingEntity.gameEvent(GameEvent.ENTITY_DAMAGE);
                 }
             } else {
-                amount = amount;
                 if (amount > 0.0F) {
                     livingEntity.getCombatTracker().recordDamage(damageSource, amount);
                     livingEntity.setHealth(livingEntity.getHealth() - amount);
@@ -62,8 +61,8 @@ public class MolecraftUtil {
         double health = krtek.molecraft$getHealth();
         StatsMap stats = krtek.molecraft$getStats();
         double maxHealth = stats.get(StatType.MAX_HEALTH).cachedValue;
-        //TODO: ADD DEFENSE
+        double defense = stats.get(StatType.DEFENSE).cachedValue;
         Component molecraftName = krtek.molecraft$getName();
-        return (molecraftName != null ? molecraftName : entity.getTypeName()).copy().append(Component.literal(" " + format.format(health) + "/" + format.format(maxHealth)).withStyle(health <= maxHealth * 0.5 ? ChatFormatting.YELLOW : ChatFormatting.RED).append(Component.literal(StatType.MAX_HEALTH.icon).withStyle(ChatFormatting.RED)));
+        return (molecraftName != null ? molecraftName : entity.getTypeName()).copy().append(Component.literal(" " + format.format(health) + "/" + format.format(maxHealth)).withStyle(health <= maxHealth * 0.5 ? ChatFormatting.YELLOW : ChatFormatting.RED).append(Component.literal(StatType.MAX_HEALTH.icon).withStyle(ChatFormatting.RED)).append(Component.literal(" " + format.format(defense) + StatType.DEFENSE.icon).withStyle(ChatFormatting.GREEN)));
     }
 }

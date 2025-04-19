@@ -6,24 +6,23 @@ import java.util.Objects;
 
 public class MiningPlayer {
     public Player player;
-    public long lastTick;
+    public double blockHealth;
 
-    public MiningPlayer(Player player, long lastTick) {
+    public MiningPlayer(Player player, double blockHealth) {
         this.player = player;
-        this.lastTick = lastTick;
+        this.blockHealth = blockHealth;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (MiningPlayer) obj;
-        return Objects.equals(this.player, that.player) &&
-                this.lastTick == that.lastTick;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MiningPlayer that = (MiningPlayer) o;
+        return Double.compare(blockHealth, that.blockHealth) == 0 && Objects.equals(player, that.player);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(player, lastTick);
+        return Objects.hash(player, blockHealth);
     }
 }

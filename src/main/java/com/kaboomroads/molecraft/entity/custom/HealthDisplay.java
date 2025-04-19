@@ -9,7 +9,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -26,6 +25,8 @@ public class HealthDisplay extends ArmorStand {
         setInvisible(true);
     }
 
+    private Entity oTrack = null;
+
     @Override
     public void tick() {
         super.tick();
@@ -33,9 +34,9 @@ public class HealthDisplay extends ArmorStand {
         if (trackEntity == null || trackEntity.isRemoved() || !(trackEntity instanceof LivingEntity livingEntity)) remove(RemovalReason.DISCARDED);
         else {
             if (tickCount % 5 == 0) setCustomName(MolecraftUtil.getEntityNameTag(livingEntity));
-            setPos(new Vec3(trackEntity.position().x, trackEntity.getBoundingBox().maxY, trackEntity.position().z));
-            setDeltaMovement(trackEntity.getDeltaMovement());
+            if (trackEntity != oTrack) startRiding(trackEntity, true);
         }
+        oTrack = trackEntity;
     }
 
     @Override

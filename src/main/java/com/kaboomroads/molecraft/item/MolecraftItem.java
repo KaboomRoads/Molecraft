@@ -35,6 +35,8 @@ public class MolecraftItem {
     public final Component name;
     public final Rarity rarity;
     public final ItemType itemType;
+    public final boolean soulbound;
+
     public final ItemStack base;
     public final EquipmentSlotGroup activeFor;
     public final TreeMap<StatType, Double> stats;
@@ -79,11 +81,12 @@ public class MolecraftItem {
         return Optional.empty();
     }
 
-    public MolecraftItem(String id, Component name, Rarity rarity, ItemType itemType, ItemStack base, EquipmentSlotGroup activeFor, TreeMap<StatType, Double> stats, List<Component> lore, Function<HolderLookup.Provider, DataComponentPatch> dataComponents) {
+    public MolecraftItem(String id, Component name, Rarity rarity, ItemType itemType, boolean soulbound, ItemStack base, EquipmentSlotGroup activeFor, TreeMap<StatType, Double> stats, List<Component> lore, Function<HolderLookup.Provider, DataComponentPatch> dataComponents) {
         this.id = id;
         this.name = name;
         this.rarity = rarity;
         this.itemType = itemType;
+        this.soulbound = soulbound;
         this.base = base;
         this.activeFor = activeFor;
         this.stats = stats;
@@ -99,11 +102,12 @@ public class MolecraftItem {
             if (component.getContents() instanceof PlaceholderContents placeholderContents) {
                 ResourceLocation placeholder = placeholderContents.placeholderId();
                 if (placeholder.equals(STATS_LOCATION)) {
-                    stats.forEach((stat, value) -> deLoreify(list, stat.name.copy().append(": ").append(stat.format(Component.literal(format.format(value))))));
+                    stats.forEach((stat, value) -> addDeLoreified(list, stat.name.copy().append(": ").append(stat.format(Component.literal(format.format(value))))));
                 } else if (placeholder.equals(RARITY_LOCATION)) {
-                    deLoreify(list, rarity.name.copy().append(CommonComponents.SPACE).append(itemType.name).withStyle(ChatFormatting.BOLD));
+                    if (soulbound) addDeLoreified(list, Component.literal("--soulbound--").withStyle(ChatFormatting.DARK_GRAY));
+                    addDeLoreified(list, rarity.name.copy().append(CommonComponents.SPACE).append(itemType.name).withStyle(ChatFormatting.BOLD));
                 }
-            } else deLoreify(list, component.copy());
+            } else addDeLoreified(list, component.copy());
         }
         itemStack.applyComponents(dataComponents.apply(lookupProvider));
         itemStack.set(DataComponents.ITEM_NAME, name.copy().withStyle(rarity.name.getStyle()));
@@ -114,7 +118,7 @@ public class MolecraftItem {
         return itemStack;
     }
 
-    private void deLoreify(ArrayList<Component> list, MutableComponent component) {
+    private void addDeLoreified(ArrayList<Component> list, MutableComponent component) {
         Style style = component.getStyle();
         component = style.isItalic() ? component : component.withStyle(style.withItalic(false));
         TextColor color = style.getColor();
@@ -136,11 +140,12 @@ public class MolecraftItem {
     public static class Builder {
         private final String id;
         private final Component name;
-        public final Rarity rarity;
-        public final ItemType itemType;
-        public final ItemStack base;
-        public final EquipmentSlotGroup activeFor;
-        public final Function<HolderLookup.Provider, DataComponentPatch> dataComponents;
+        private final Rarity rarity;
+        private final ItemType itemType;
+        private boolean soulbound;
+        private final ItemStack base;
+        private final EquipmentSlotGroup activeFor;
+        private final Function<HolderLookup.Provider, DataComponentPatch> dataComponents;
         private final TreeMap<StatType, Double> stats = new TreeMap<>();
         private final ArrayList<Component> lore = new ArrayList<>();
 
@@ -176,8 +181,13 @@ public class MolecraftItem {
             return lore(string, ChatFormatting.GRAY);
         }
 
+        public Builder soulbound() {
+            soulbound = true;
+            return this;
+        }
+
         public MolecraftItem build() {
-            return new MolecraftItem(id, name, rarity, itemType, base, activeFor, stats, lore, dataComponents);
+            return new MolecraftItem(id, name, rarity, itemType, soulbound, base, activeFor, stats, lore, dataComponents);
         }
     }
 

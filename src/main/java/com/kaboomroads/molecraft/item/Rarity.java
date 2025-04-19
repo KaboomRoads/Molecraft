@@ -5,6 +5,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
 public enum Rarity {
+    NONE(Component.empty()),
     COMMON(Component.literal("COMMON").withStyle(ChatFormatting.WHITE)),
     UNCOMMON(Component.literal("UNCOMMON").withStyle(ChatFormatting.GREEN)),
     RARE(Component.literal("RARE").withStyle(ChatFormatting.BLUE)),

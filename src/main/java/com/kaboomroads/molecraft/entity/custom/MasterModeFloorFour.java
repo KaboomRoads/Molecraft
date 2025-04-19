@@ -5,15 +5,12 @@ import com.kaboomroads.molecraft.entity.Skin;
 import com.kaboomroads.molecraft.entity.StatType;
 import com.kaboomroads.molecraft.entity.StatsMap;
 import com.kaboomroads.molecraft.mixinimpl.ModLivingEntity;
-import com.mojang.authlib.GameProfile;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.UUID;
 
 public class MasterModeFloorFour extends Zombie implements PlayerEntity {
     public MasterModeFloorFour(Level level) {
@@ -43,15 +40,6 @@ public class MasterModeFloorFour extends Zombie implements PlayerEntity {
     @Override
     public Skin getSkin() {
         return SKIN;
-    }
-
-    @Override
-    public GameProfile createGameProfile() {
-        return PlayerEntity.initGameProfile(new GameProfile(UUID.randomUUID(), getInvisibleName(getId())), SKIN);
-    }
-
-    private static String getInvisibleName(int id) {
-        return Integer.toHexString(id).replaceAll("(.)", "§$1");
     }
 
     @Override

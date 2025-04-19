@@ -1,6 +1,7 @@
 package com.kaboomroads.molecraft.mixin;
 
 import com.kaboomroads.molecraft.item.MolecraftItem;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -12,6 +13,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentHolder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.Tag;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -62,5 +64,10 @@ public abstract class ItemStackMixin implements DataComponentHolder {
             player.containerMenu.sendAllDataToRemote();
         }
         return InteractionResult.PASS;
+    }
+
+    @ModifyExpressionValue(method = "method_57371", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ExtraCodecs;intRange(II)Lcom/mojang/serialization/Codec;", ordinal = 0))
+    private static Codec<Integer> un99ify(Codec<Integer> original) {
+        return ExtraCodecs.POSITIVE_INT;
     }
 }

@@ -4,14 +4,22 @@
   "package": "com.kaboomroads.molecraft.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "DataComponentsMixin",
+    "DerivedLevelDataMixin",
     "EntityMixin",
     "EntityTypeMixin",
     "InventoryMixin",
+    "ItemEntityMixin",
     "ItemStackMixin",
     "LivingEntityMixin",
+    "MinecraftServerMixin",
+    "PlayerListMixin",
     "PlayerMixin",
+    "PrimaryLevelDataMixin",
     "ServerEntityMixin",
+    "ServerGamePacketListenerImplMixin",
     "ServerLevel$EntityCallbacksMixin",
+    "ServerLevelMixin",
     "ServerPlayerGameModeMixin"
   ],
   "injectors": {

@@ -2,6 +2,7 @@ package com.kaboomroads.molecraft.mixin;
 
 import com.kaboomroads.molecraft.entity.PlayerEntity;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.authlib.GameProfile;
@@ -15,6 +16,7 @@ import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
@@ -46,20 +48,28 @@ public abstract class ServerEntityMixin {
     @Unique
     private ServerPlayer serverPlayer = null;
 
+    @WrapMethod(method = "sendPairingData")
+    private void hideItemEntities(ServerPlayer player, Consumer<Packet<ClientGamePacketListener>> consumer, Operation<Void> original) {
+        if (entity instanceof ItemEntity itemEntity) {
+            if (itemEntity.target == null || itemEntity.target.equals(player.getUUID())) original.call(player, consumer);
+        } else original.call(player, consumer);
+    }
+
     @WrapOperation(method = "sendPairingData", at = @At(value = "INVOKE", target = "Ljava/util/function/Consumer;accept(Ljava/lang/Object;)V", ordinal = 0))
     private <T> void molecraftPlayerEntity(Consumer<T> instance, T t, Operation<Void> original) {
         if (entity instanceof PlayerEntity playerEntity) {
-            GameProfile profile = playerEntity.createGameProfile();
-            serverPlayer = FakePlayer.get(level, profile);
             int entityId = entity.getId();
+            GameProfile profile = playerEntity.createGameProfile(entityId);
+            serverPlayer = FakePlayer.get(level, profile);
             serverPlayer.setId(entityId);
             ClientboundPlayerInfoUpdatePacket infoPacket = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, serverPlayer);
             Packet<ClientGamePacketListener> spawnPacket = serverPlayer.getAddEntityPacket((ServerEntity) (Object) this);
             ClientboundRotateHeadPacket roatatePacket = new ClientboundRotateHeadPacket(serverPlayer, (byte) ((entity.getYHeadRot() / 360) * 256));
             Scoreboard scoreboard = new Scoreboard();
-            PlayerTeam team = new PlayerTeam(scoreboard, profile.getName());
+            String name = profile.getName();
+            PlayerTeam team = new PlayerTeam(scoreboard, name);
             team.setNameTagVisibility(Team.Visibility.NEVER);
-            team.getPlayers().add(profile.getName());
+            team.getPlayers().add(name);
             ClientboundSetPlayerTeamPacket teamPacket = ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, true);
             SynchedEntityData.DataItem<Byte> skinLayerDataItem = new SynchedEntityData.DataItem<>(new EntityDataAccessor<>(17, EntityDataSerializers.BYTE), (byte) 127);
             ClientboundSetEntityDataPacket playerDataPacket = new ClientboundSetEntityDataPacket(entityId, List.of(skinLayerDataItem.value()));
