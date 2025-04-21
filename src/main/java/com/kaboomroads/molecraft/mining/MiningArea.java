@@ -76,6 +76,7 @@ public class MiningArea {
             entryTag.putString("break_sound", soundInstance.sound().getRegisteredName());
             entryTag.putFloat("break_sound_volume", soundInstance.volume());
             entryTag.putFloat("break_sound_pitch", soundInstance.pitch());
+            entryTag.putString("loot", blockType.loot());
             typesTag.add(entryTag);
         }
         return typesTag;
@@ -103,7 +104,7 @@ public class MiningArea {
             CompoundTag entryTag = typesTag.getCompound(i);
             ResourceLocation resourceLocation = ResourceLocation.parse(entryTag.getString("block"));
             Optional<Holder.Reference<Block>> optional = blockLookup.get(ResourceKey.create(Registries.BLOCK, resourceLocation));
-            loadedTypes.put(optional.get().value(), new BlockType(entryTag.getInt("breaking_power"), entryTag.getDouble("block_health"), entryTag.getInt("resonant_frequency"), new SoundInstance(soundEventLookup.getOrThrow(ResourceKey.create(Registries.SOUND_EVENT, ResourceLocation.parse(entryTag.getString("break_sound")))), entryTag.getFloat("break_sound_volume"), entryTag.getFloat("break_sound_pitch"))));
+            loadedTypes.put(optional.get().value(), new BlockType(entryTag.getInt("breaking_power"), entryTag.getDouble("block_health"), entryTag.getInt("resonant_frequency"), new SoundInstance(soundEventLookup.getOrThrow(ResourceKey.create(Registries.SOUND_EVENT, ResourceLocation.parse(entryTag.getString("break_sound")))), entryTag.getFloat("break_sound_volume"), entryTag.getFloat("break_sound_pitch")), entryTag.getString("loot")));
         }
         return loadedTypes;
     }

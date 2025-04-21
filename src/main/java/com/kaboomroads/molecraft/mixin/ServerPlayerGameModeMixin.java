@@ -2,6 +2,8 @@ package com.kaboomroads.molecraft.mixin;
 
 import com.kaboomroads.molecraft.entity.StatType;
 import com.kaboomroads.molecraft.entity.StatsMap;
+import com.kaboomroads.molecraft.loot.Loot;
+import com.kaboomroads.molecraft.loot.LootManager;
 import com.kaboomroads.molecraft.mining.*;
 import com.kaboomroads.molecraft.mixinimpl.ModLivingEntity;
 import com.kaboomroads.molecraft.mixinimpl.ModServerLevel;
@@ -22,9 +24,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,6 +37,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Iterator;
 
 @Mixin(ServerPlayerGameMode.class)
 public abstract class ServerPlayerGameModeMixin {
@@ -96,6 +103,22 @@ public abstract class ServerPlayerGameModeMixin {
                 SoundInstance soundInstance = type.breakSound();
                 ClientboundSoundPacket packet = new ClientboundSoundPacket(soundInstance.sound(), SoundSource.BLOCKS, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, (soundInstance.volume() + 1.0F) / 2.0F, soundInstance.pitch() * 0.8F, level.random.nextLong());
                 player.connection.send(packet);
+                Vec3 lootPos = Vec3.atCenterOf(pos).add(face.getUnitVec3().scale(0.625));
+                String lootId = type.loot();
+                if (lootId != null) {
+                    LootManager lootManager = ((ModServerLevelData) level.getLevelData()).molecraft$getLootManager();
+                    if (lootManager.lootMap.containsKey(lootId)) {
+                        Loot loot = lootManager.get(lootId);
+                        Iterator<ItemStack> iterator = loot.collect(level.random, level.registryAccess());
+                        while (iterator.hasNext()) {
+                            ItemStack itemStack = iterator.next();
+                            ItemEntity itemEntity = new ItemEntity(level, lootPos.x, lootPos.y, lootPos.z, itemStack);
+                            itemEntity.setDefaultPickUpDelay();
+                            itemEntity.setTarget(player.getUUID());
+                            level.addFreshEntity(itemEntity);
+                        }
+                    }
+                }
                 ((ModServerLevel) level).molecraft$schedule(100, serverLevel -> serverLevel.setBlock(pos, state, 3));
             } else {
                 ((ModServerLevel) level).molecraft$schedule(resonantFrequency + (onTime ? delta : 0), serverLevel ->

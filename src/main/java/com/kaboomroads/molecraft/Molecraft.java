@@ -1,5 +1,6 @@
 package com.kaboomroads.molecraft;
 
+import com.kaboomroads.molecraft.command.MCLCommand;
 import com.kaboomroads.molecraft.command.MCMCommand;
 import com.kaboomroads.molecraft.command.MolecraftCommands;
 import com.kaboomroads.molecraft.command.TradeCommand;
@@ -16,6 +17,7 @@ public class Molecraft implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, context, selection) -> {
             MolecraftCommands.register(dispatcher);
             MCMCommand.register(dispatcher, context);
+            MCLCommand.register(dispatcher);
             TradeCommand.register(dispatcher);
         });
     }

@@ -1,5 +1,6 @@
 package com.kaboomroads.molecraft.mixin;
 
+import com.kaboomroads.molecraft.loot.LootManager;
 import com.kaboomroads.molecraft.mining.Mining;
 import com.kaboomroads.molecraft.mixinimpl.ModServerLevelData;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -25,6 +26,8 @@ import java.util.Optional;
 public abstract class PrimaryLevelDataMixin implements ModServerLevelData {
     @Unique
     private Mining mining = new Mining();
+    @Unique
+    private LootManager lootManager = new LootManager();
 
     @Override
     public Mining molecraft$getMining() {
@@ -36,9 +39,20 @@ public abstract class PrimaryLevelDataMixin implements ModServerLevelData {
         this.mining = mining;
     }
 
+    @Override
+    public LootManager molecraft$getLootManager() {
+        return lootManager;
+    }
+
+    @Override
+    public void molecraft$setLootManager(LootManager lootManager) {
+        this.lootManager = lootManager;
+    }
+
     @Inject(method = "setTagData", at = @At("TAIL"))
     private void saveMolecraft(RegistryAccess registry, CompoundTag tag, CompoundTag playerNBT, CallbackInfo ci) {
         tag.put("molecraft_mining", mining.save());
+        tag.put("molecraft_loot_manager", lootManager.save());
     }
 
     @ModifyReturnValue(method = "parse", at = @At("RETURN"))
@@ -49,6 +63,8 @@ public abstract class PrimaryLevelDataMixin implements ModServerLevelData {
             Optional<HolderGetter<SoundEvent>> soundEventLookup = ((RegistryOps<T>) tag.getOps()).getter(Registries.SOUND_EVENT);
             ((ModServerLevelData) original).molecraft$setMining(Mining.load(miningTag.get(), blockLookup.get(), soundEventLookup.get()));
         }
+        Optional<CompoundTag> lootManagerTag = tag.get("molecraft_loot_manager").flatMap(CompoundTag.CODEC::parse).result();
+        lootManagerTag.ifPresent(compoundTag -> ((ModServerLevelData) original).molecraft$setLootManager(LootManager.load(compoundTag)));
         return original;
     }
 }
