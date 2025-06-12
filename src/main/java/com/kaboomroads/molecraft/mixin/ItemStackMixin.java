@@ -1,5 +1,6 @@
 package com.kaboomroads.molecraft.mixin;
 
+import com.kaboomroads.molecraft.item.MolecraftData;
 import com.kaboomroads.molecraft.item.MolecraftItem;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -19,10 +20,12 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.Optional;
@@ -51,16 +54,29 @@ public abstract class ItemStackMixin implements DataComponentHolder {
     private InteractionResult wrap_useOn(UseOnContext context, Operation<InteractionResult> original) {
         Player player = context.getPlayer();
         if (player != null) {
-            if (has(DataComponents.EQUIPPABLE) || (!has(DataComponents.CUSTOM_DATA) && player.getAbilities().instabuild)) return original.call(context);
+            if (has(DataComponents.EQUIPPABLE) || (!has(DataComponents.CUSTOM_DATA) && player.getAbilities().instabuild) || allowUse())
+                return original.call(context);
             player.containerMenu.sendAllDataToRemote();
         }
         return InteractionResult.PASS;
     }
 
+    @Unique
+    private boolean allowUse() {
+        CustomData customData = get(DataComponents.CUSTOM_DATA);
+        if (customData == null) return false;
+        MolecraftData molecraftData = MolecraftData.parse(customData.getUnsafe());
+        if (molecraftData == null) return false;
+        MolecraftItem item = molecraftData.getItem();
+        if (item == null) return false;
+        return item.allowUse;
+    }
+
     @WrapMethod(method = "use")
     private InteractionResult wrap_use(Level level, Player player, InteractionHand hand, Operation<InteractionResult> original) {
         if (player != null) {
-            if (has(DataComponents.EQUIPPABLE) || (!has(DataComponents.CUSTOM_DATA) && player.getAbilities().instabuild)) return original.call(level, player, hand);
+            if (has(DataComponents.EQUIPPABLE) || (!has(DataComponents.CUSTOM_DATA) && player.getAbilities().instabuild) || allowUse())
+                return original.call(level, player, hand);
             player.containerMenu.sendAllDataToRemote();
         }
         return InteractionResult.PASS;

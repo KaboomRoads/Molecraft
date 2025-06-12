@@ -16,9 +16,18 @@ public enum StatType {
     MAX_HEALTH("max_health", "Max Health", "❤", c -> c.withStyle(ChatFormatting.RED)),
     HEALTH_REGEN("health_regen", "Health Regen", "💞", c -> c.withStyle(ChatFormatting.RED)),
     DEFENSE("defense", "Defense", "🔰", c -> c.withStyle(ChatFormatting.GREEN)),
+    LOOTING("looting", "Looting", "🍀", c -> c.withStyle(ChatFormatting.GOLD)),
     BREAKING_POWER("breaking_power", "Breaking Power", "🔅", c -> c.withStyle(ChatFormatting.DARK_AQUA)),
-    MINING_STRENGTH("mining_strength", "Mining Strength", "⛏", c -> c.withStyle(ChatFormatting.GOLD)),
-    BRILLIANCE("brilliance", "Brilliance", "🍀", c -> c.withStyle(ChatFormatting.GOLD));
+    MINING_STRENGTH("mining_strength", "Mining Strength", "⛏", c -> c.withStyle(ChatFormatting.DARK_GREEN)),
+    BRILLIANCE("brilliance", "Brilliance", "🍀", c -> c.withStyle(ChatFormatting.GOLD)),
+    REEL_STRENGTH("reel_strength", "Reel Strength", "🎣", c -> c.withStyle(ChatFormatting.AQUA)),
+    FISHING_LUCK("fishing_luck", "Fishing Luck", "🍀", c -> c.withStyle(ChatFormatting.GOLD));
+
+    //TODO:
+    // FISHING
+    // FORAGING MINE LOG FROM UP TO DOWN DEPENDING ON LOOK DIRECTION ON THE BLOCK
+    // CRAFTING SKILL UPGRADE WEAPONS AND STUFF WITH RUNES MAYBE MATERIALS
+    // PETS
 
     public final String id;
     public final Component name;

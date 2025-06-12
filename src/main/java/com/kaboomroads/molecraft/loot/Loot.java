@@ -3,15 +3,19 @@ package com.kaboomroads.molecraft.loot;
 import com.kaboomroads.molecraft.item.MolecraftData;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
 
 public class Loot {
-    public final HashMap<String, TreeMap<Float, HashSet<MolecraftData>>> rolls;
+    public final HashMap<String, HashMap<Float, SimpleWeightedRandomList<MolecraftData>>> rolls;
     public final boolean save;
 
-    public Loot(HashMap<String, TreeMap<Float, HashSet<MolecraftData>>> rolls, boolean save) {
+    public Loot(HashMap<String, HashMap<Float, SimpleWeightedRandomList<MolecraftData>>> rolls, boolean save) {
         this.rolls = rolls;
         this.save = save;
     }
@@ -20,22 +24,70 @@ public class Loot {
         this(new HashMap<>(), true);
     }
 
-    public Iterator<ItemStack> collect(RandomSource random, HolderLookup.Provider lookupProvider) {
-        return new LootIterator(rolls, random, lookupProvider);
+    public Iterator<ItemStack> collect(RandomSource random, float multiplier, HolderLookup.Provider lookupProvider) {
+        return new LootIterator(rolls, random, multiplier, lookupProvider);
+    }
+
+    public static Builder builder(boolean save) {
+        return new Builder(save);
+    }
+
+    public static class Builder {
+        public boolean save;
+        public final HashMap<String, HashMap<Float, SimpleWeightedRandomList<MolecraftData>>> rolls = new HashMap<>();
+        public HashMap<Float, SimpleWeightedRandomList.Builder<MolecraftData>> currentRoll = null;
+
+        public Builder(boolean save) {
+            this.save = save;
+        }
+
+        public Builder startRoll() {
+            currentRoll = new HashMap<>();
+            return this;
+        }
+
+        public Builder add(float chance, int weight, MolecraftData molecraftData) {
+            if (currentRoll == null) throw new IllegalStateException("Cannot add item drop without starting a roll");
+            SimpleWeightedRandomList.Builder<MolecraftData> builder = currentRoll.get(chance);
+            if (builder == null) {
+                builder = new SimpleWeightedRandomList.Builder<>();
+                builder.add(molecraftData, weight);
+                currentRoll.put(chance, builder);
+            } else builder.add(molecraftData, weight);
+            return this;
+        }
+
+        public Builder endRoll(String name) {
+            HashMap<Float, SimpleWeightedRandomList<MolecraftData>> roll = new HashMap<>();
+            for (Map.Entry<Float, SimpleWeightedRandomList.Builder<MolecraftData>> entry : currentRoll.entrySet()) {
+                float chance = entry.getKey();
+                SimpleWeightedRandomList.Builder<MolecraftData> builder = entry.getValue();
+                roll.put(chance, builder.build());
+            }
+            rolls.put(name, roll);
+            currentRoll = null;
+            return this;
+        }
+
+        public Loot build() {
+            return new Loot(rolls, save);
+        }
     }
 
     public static class LootIterator implements Iterator<ItemStack> {
-        private final Iterator<Map.Entry<String, TreeMap<Float, HashSet<MolecraftData>>>> lootIterator;
-        private Iterator<Map.Entry<Float, HashSet<MolecraftData>>> rollIterator;
-        private Iterator<MolecraftData> dropIterator;
+        private final Iterator<Map.Entry<String, HashMap<Float, SimpleWeightedRandomList<MolecraftData>>>> lootIterator;
+        private Iterator<Map.Entry<Float, SimpleWeightedRandomList<MolecraftData>>> rollIterator;
+        private SimpleWeightedRandomList<MolecraftData> currentDrop;
         private ItemStack nextItem;
-        private Map.Entry<Float, HashSet<MolecraftData>> currentLootEntry;
+        private Map.Entry<Float, SimpleWeightedRandomList<MolecraftData>> currentLootEntry;
         private final RandomSource random;
+        private final float multiplier;
         private final HolderLookup.Provider lookupProvider;
 
-        public LootIterator(HashMap<String, TreeMap<Float, HashSet<MolecraftData>>> loot, RandomSource random, HolderLookup.Provider lookupProvider) {
-            this.lootIterator = loot.entrySet().iterator();
+        public LootIterator(HashMap<String, HashMap<Float, SimpleWeightedRandomList<MolecraftData>>> rolls, RandomSource random, float multiplier, HolderLookup.Provider lookupProvider) {
+            this.lootIterator = rolls.entrySet().iterator();
             this.random = random;
+            this.multiplier = multiplier;
             this.lookupProvider = lookupProvider;
             nextRoll();
             nextDrop();
@@ -43,12 +95,12 @@ public class Loot {
 
         private void nextRoll() {
             if (lootIterator.hasNext()) {
-                Map.Entry<String, TreeMap<Float, HashSet<MolecraftData>>> entry = lootIterator.next();
+                Map.Entry<String, HashMap<Float, SimpleWeightedRandomList<MolecraftData>>> entry = lootIterator.next();
                 rollIterator = entry.getValue().entrySet().iterator();
                 nextEntry();
             } else {
                 rollIterator = null;
-                dropIterator = null;
+                currentDrop = null;
                 currentLootEntry = null;
             }
         }
@@ -56,9 +108,9 @@ public class Loot {
         private void nextEntry() {
             if (rollIterator != null && rollIterator.hasNext()) {
                 currentLootEntry = rollIterator.next();
-                dropIterator = currentLootEntry.getValue().iterator();
+                currentDrop = currentLootEntry.getValue();
             } else {
-                dropIterator = null;
+                currentDrop = null;
                 currentLootEntry = null;
                 nextRoll();
             }
@@ -66,19 +118,23 @@ public class Loot {
 
         private void nextDrop() {
             nextItem = null;
-            while (nextItem == null) {
-                if (dropIterator != null && dropIterator.hasNext()) {
-                    MolecraftData candidate = dropIterator.next();
-                    float chance = currentLootEntry.getKey();
+            while (true) {
+                if (currentDrop != null) {
+                    float chance = currentLootEntry.getKey() * multiplier;
                     float extraChance = chance;
                     float randomFloat = random.nextFloat();
                     int count = (int) extraChance;
                     extraChance = extraChance - count;
                     if (randomFloat < extraChance) count++;
-                    if (randomFloat < chance) nextItem = candidate.getItem().construct(count, lookupProvider);
+                    if (randomFloat < chance) {
+                        Optional<MolecraftData> candidate = currentDrop.getRandomValue(random);
+                        if (candidate.isPresent()) nextItem = candidate.get().construct(count, lookupProvider);
+                    }
+                    nextEntry();
+                    break;
                 } else if (rollIterator != null) {
                     nextEntry();
-                    if (dropIterator == null) break;
+                    if (currentDrop == null) break;
                 } else break;
             }
         }

@@ -20,7 +20,7 @@ public class ServerLevel$EntityCallbacksMixin {
             String id = ((ModEntity) entity).molecraft$getId();
             if (id != null) {
                 MolecraftEntity molecraftEntity = MolecraftEntities.ENTITIES.get(id);
-                if (molecraftEntity != null && molecraftEntity.customNameTag()) {
+                if (molecraftEntity != null && molecraftEntity.customNameTag) {
                     HealthDisplay healthDisplay = (HealthDisplay) MolecraftEntities.HEALTH_DISPLAY.construct(livingEntity.level());
                     healthDisplay.track = livingEntity.getUUID();
                     livingEntity.level().addFreshEntity(healthDisplay);

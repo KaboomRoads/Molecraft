@@ -8,6 +8,7 @@ public enum ItemType {
     SWORD(Component.literal("SWORD")),
     BOOTS(Component.literal("BOOTS")),
     BOW(Component.literal("BOW")),
+    FISHING_ROD(Component.literal("FISHING ROD")),
     ;
 
     public final Component name;

@@ -1,10 +1,10 @@
 package com.kaboomroads.molecraft.mixin;
 
-import com.kaboomroads.molecraft.entity.StatInstance;
-import com.kaboomroads.molecraft.entity.StatType;
-import com.kaboomroads.molecraft.entity.StatsMap;
-import com.kaboomroads.molecraft.item.MolecraftData;
-import com.kaboomroads.molecraft.item.MolecraftItem;
+import com.kaboomroads.molecraft.entity.*;
+import com.kaboomroads.molecraft.item.*;
+import com.kaboomroads.molecraft.item.ability.core.Ability;
+import com.kaboomroads.molecraft.item.ability.core.MolecraftEnchant;
+import com.kaboomroads.molecraft.item.ability.core.When;
 import com.kaboomroads.molecraft.mixinimpl.ModLivingEntity;
 import com.kaboomroads.molecraft.util.MolecraftUtil;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
@@ -12,6 +12,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +28,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,8 +40,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity implements ModLivingEntity {
@@ -56,14 +62,16 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
     @Unique
     private double molecraftHealth;
     @Unique
-    private double mana;
+    private double oMolecraftHealth;
 
     public LivingEntityMixin(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
 
     @Unique
-    private StatsMap stats = molecraft$initStats().build();
+    private final StatsMap stats = molecraft$initStats().build();
+    @Unique
+    private final AbilitiesMap abilities = new AbilitiesMap();
 
     @Override
     public StatsMap.Builder molecraft$initStats() {
@@ -95,14 +103,34 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
                 if (molecraftItem != null) {
                     EquipmentSlotGroup group = molecraftItem.activeFor;
                     if (group.test(equipmentSlot)) {
-                        for (Map.Entry<StatType, Double> entry : molecraftItem.stats.entrySet()) {
-                            StatType statType = entry.getKey();
-                            double value = entry.getValue();
-                            StatInstance statInstance = stats.get(statType);
-                            if (statInstance != null) {
-                                HashMap<String, Double> modifiers = statInstance.modifiers;
-                                modifiers.put(equipmentSlot.getSerializedName(), value);
+                        DataPropertyMap propertyMap = molecraftData.propertyMap();
+                        TreeMap<MolecraftEnchant<?, ?>, Integer> enchantsForSlot = propertyMap.get(DataPropertyTypes.ENCHANTS);
+                        TreeSet<Ability<?, ?, ?>> abilitiesForSlot = molecraftItem.abilities;
+                        boolean enchantMatter = enchantsForSlot != null && !enchantsForSlot.isEmpty();
+                        boolean abilityMatter = abilitiesForSlot != null && !abilitiesForSlot.isEmpty();
+                        if (enchantMatter || abilityMatter) {
+                            TreeMap<When, TreeSet<AbilitiesMap.AbilityInstance<?, ?, ?>>> whenMap = abilities.map.getOrDefault(equipmentSlot, new TreeMap<>());
+                            whenMap.clear();
+                            if (enchantMatter) for (Map.Entry<MolecraftEnchant<?, ?>, Integer> entry : enchantsForSlot.entrySet()) {
+                                MolecraftEnchant<?, ?> enchant = entry.getKey();
+                                int enchantLevel = entry.getValue();
+                                TreeSet<AbilitiesMap.AbilityInstance<?, ?, ?>> enchantSet = whenMap.getOrDefault(enchant.when, new TreeSet<>());
+                                enchantSet.add(new AbilitiesMap.EnchantInstance<>(enchant, enchantLevel));
+                                whenMap.put(enchant.when, enchantSet);
                             }
+                            if (abilityMatter) for (Ability<?, ?, ?> ability : abilitiesForSlot) {
+                                TreeSet<AbilitiesMap.AbilityInstance<?, ?, ?>> abilitySet = whenMap.getOrDefault(ability.when, new TreeSet<>());
+                                abilitySet.add(new AbilitiesMap.AbilityInstance<>(ability));
+                                whenMap.put(ability.when, abilitySet);
+                            }
+                            if (!whenMap.isEmpty()) abilities.map.put(equipmentSlot, whenMap);
+                            else abilities.map.remove(equipmentSlot);
+                        }
+                        for (Map.Entry<StatType, ItemStat> entry : molecraftItem.stats.entrySet()) {
+                            StatType statType = entry.getKey();
+                            ItemStat stat = entry.getValue();
+                            StatInstance statInstance = stats.get(statType);
+                            if (statInstance != null) statInstance.putModifier(equipmentSlot.getSerializedName(), stat.value(), stat.operation());
                         }
                     }
                 }
@@ -125,14 +153,12 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
                 if (molecraftItem != null) {
                     EquipmentSlotGroup group = molecraftItem.activeFor;
                     if (group.test(slot)) {
-                        for (Map.Entry<StatType, Double> entry : molecraftItem.stats.entrySet()) {
-                            StatType statType = entry.getKey();
+                        for (StatType statType : molecraftItem.stats.keySet()) {
                             StatInstance statInstance = stats.get(statType);
-                            if (statInstance != null) {
-                                HashMap<String, Double> modifiers = statInstance.modifiers;
-                                modifiers.remove(slot.getSerializedName());
-                            }
+                            if (statInstance != null) statInstance.removeModifier(slot.getSerializedName());
                         }
+                        TreeMap<When, TreeSet<AbilitiesMap.AbilityInstance<?, ?, ?>>> whenMap = abilities.map.get(slot);
+                        if (whenMap != null) whenMap.clear();
                     }
                 }
             }
@@ -141,7 +167,7 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
 
     @WrapMethod(method = "actuallyHurt")
     private void wrap_actuallyHurt(ServerLevel level, DamageSource damageSource, float amount, Operation<Void> original) {
-        MolecraftUtil.dealDamage((LivingEntity) (Object) this, level, damageSource, amount);
+        MolecraftUtil.actuallyHurt((LivingEntity) (Object) this, level, damageSource, amount);
     }
 
     @Inject(method = "setHealth", at = @At("TAIL"))
@@ -153,11 +179,23 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
     @Inject(method = "tick", at = @At("TAIL"))
     private void inject_tick(CallbackInfo ci) {
         setHealth(getHealth());
-        if (tickCount % 5 == 0) {
+        if (this instanceof UpdatingNamedEntity namedEntity && namedEntity.updateName() && molecraftHealth != oMolecraftHealth) {
             Component component = MolecraftUtil.getEntityNameTag((LivingEntity) (Object) this);
             setCustomName(component);
             setCustomNameVisible(true);
         }
+        if (stuckTicks > 0) {
+            stuckTicks--;
+            setDeltaMovement(new Vec3(0.0, 0.0, 0.0));
+            markHurt();
+            ServerLevel level = (ServerLevel) level();
+            AABB bb = getBoundingBox();
+            Vec3 center = bb.getCenter();
+            float horizontal = getBbWidth() * 0.25F;
+            float vertical = getBbHeight() * 0.25F;
+            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.MUD.defaultBlockState()), center.x, center.y, center.z, 1, horizontal, vertical, horizontal, 1.0);
+        }
+        oMolecraftHealth = molecraftHealth;
     }
 
     @Override
@@ -166,8 +204,8 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
     }
 
     @Override
-    public void molecraft$setStats(StatsMap statsMap) {
-        stats = statsMap;
+    public AbilitiesMap molecraft$getEnchants() {
+        return abilities;
     }
 
     @Override
@@ -183,13 +221,11 @@ public abstract class LivingEntityMixin extends Entity implements ModLivingEntit
         entityData.set(DATA_HEALTH_ID, Mth.clamp((float) (health / molecraftMaxHealth * maxHealth), 0.0F, (float) maxHealth));
     }
 
-    @Override
-    public double molecraft$getMana() {
-        return mana;
-    }
+    @Unique
+    private int stuckTicks;
 
     @Override
-    public void molecraft$setMana(double mana) {
-        this.mana = Mth.clamp(mana, 0.0, stats.get(StatType.MAX_MANA).cachedValue);
+    public void molecraft$makeStuck(int ticks) {
+        stuckTicks = ticks;
     }
 }

@@ -1,12 +1,12 @@
 package com.kaboomroads.molecraft.mixin;
 
 import com.kaboomroads.molecraft.entity.PlayerEntity;
+import com.kaboomroads.molecraft.mixinimpl.ModServerLevel;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.authlib.GameProfile;
-import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -15,6 +15,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.scores.PlayerTeam;
@@ -30,6 +31,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 @Mixin(ServerEntity.class)
@@ -45,6 +47,9 @@ public abstract class ServerEntityMixin {
     @Shadow
     private @Nullable List<SynchedEntityData.DataValue<?>> trackedDataValues;
 
+    @Shadow
+    @Final
+    private Consumer<Packet<?>> broadcast;
     @Unique
     private ServerPlayer serverPlayer = null;
 
@@ -59,8 +64,8 @@ public abstract class ServerEntityMixin {
     private <T> void molecraftPlayerEntity(Consumer<T> instance, T t, Operation<Void> original) {
         if (entity instanceof PlayerEntity playerEntity) {
             int entityId = entity.getId();
-            GameProfile profile = playerEntity.createGameProfile(entityId);
-            serverPlayer = FakePlayer.get(level, profile);
+            GameProfile profile = playerEntity.createGameProfile(entity);
+            serverPlayer = FakePlayerInvoker.init(level, profile);
             serverPlayer.setId(entityId);
             ClientboundPlayerInfoUpdatePacket infoPacket = new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, serverPlayer);
             Packet<ClientGamePacketListener> spawnPacket = serverPlayer.getAddEntityPacket((ServerEntity) (Object) this);
@@ -82,10 +87,22 @@ public abstract class ServerEntityMixin {
             original.call(instance, roatatePacket);
             original.call(instance, teamPacket);
             original.call(instance, playerDataPacket);
-//            original.call(instance, entityDataPacket);
+
+            remove(level.getServer().getPlayerList(), serverPlayer);
+            ((ModServerLevel) level).molecraft$schedule(40, serverLevel -> broadcast.accept(new ClientboundPlayerInfoRemovePacket(List.of(serverPlayer.getUUID()))));
         } else {
             original.call(instance, t);
         }
+    }
+
+    @Unique
+    private void remove(PlayerList playerList, ServerPlayer player) {
+        player.getAdvancements().stopListening();
+        playerList.getPlayers().remove(player);
+        UUID uuid = player.getUUID();
+        if (playerList.playersByUUID.get(uuid) == player) playerList.playersByUUID.remove(uuid);
+        if (playerList.stats.get(uuid) == player.getStats()) playerList.stats.remove(uuid);
+        if (playerList.advancements.get(uuid) == player.getAdvancements()) playerList.advancements.remove(uuid);
     }
 
     @ModifyExpressionValue(method = "sendDirtyEntityData", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/syncher/SynchedEntityData;packDirty()Ljava/util/List;"))

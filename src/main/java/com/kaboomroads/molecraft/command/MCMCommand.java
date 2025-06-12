@@ -30,7 +30,6 @@ import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -116,19 +115,7 @@ public class MCMCommand {
                                                                                 .then(Commands.argument("sound", ResourceLocationArgument.id()).suggests(SuggestionProviders.AVAILABLE_SOUNDS)
                                                                                         .then(Commands.argument("volume", FloatArgumentType.floatArg(0))
                                                                                                 .then(Commands.argument("pitch", FloatArgumentType.floatArg(0))
-                                                                                                        .executes(context -> modifyAdd(
-                                                                                                                context,
-                                                                                                                StringArgumentType.getString(context, "id"),
-                                                                                                                BlockStateArgument.getBlock(context, "block").getState().getBlock(),
-                                                                                                                IntegerArgumentType.getInteger(context, "breakingPower"),
-                                                                                                                DoubleArgumentType.getDouble(context, "blockHealth"),
-                                                                                                                IntegerArgumentType.getInteger(context, "resonantFrequency"),
-                                                                                                                ResourceLocationArgument.getId(context, "sound"),
-                                                                                                                FloatArgumentType.getFloat(context, "volume"),
-                                                                                                                FloatArgumentType.getFloat(context, "pitch"),
-                                                                                                                null
-                                                                                                        ))
-                                                                                                        .then(Commands.argument("loot", StringArgumentType.string()).suggests(MCLCommand.SUGGEST_LOOT)
+                                                                                                        .then(Commands.argument("xp", IntegerArgumentType.integer(0))
                                                                                                                 .executes(context -> modifyAdd(
                                                                                                                         context,
                                                                                                                         StringArgumentType.getString(context, "id"),
@@ -139,8 +126,24 @@ public class MCMCommand {
                                                                                                                         ResourceLocationArgument.getId(context, "sound"),
                                                                                                                         FloatArgumentType.getFloat(context, "volume"),
                                                                                                                         FloatArgumentType.getFloat(context, "pitch"),
-                                                                                                                        StringArgumentType.getString(context, "loot")
+                                                                                                                        IntegerArgumentType.getInteger(context, "xp"),
+                                                                                                                        null
                                                                                                                 ))
+                                                                                                                .then(Commands.argument("loot", StringArgumentType.string()).suggests(MCLCommand.SUGGEST_LOOT)
+                                                                                                                        .executes(context -> modifyAdd(
+                                                                                                                                context,
+                                                                                                                                StringArgumentType.getString(context, "id"),
+                                                                                                                                BlockStateArgument.getBlock(context, "block").getState().getBlock(),
+                                                                                                                                IntegerArgumentType.getInteger(context, "breakingPower"),
+                                                                                                                                DoubleArgumentType.getDouble(context, "blockHealth"),
+                                                                                                                                IntegerArgumentType.getInteger(context, "resonantFrequency"),
+                                                                                                                                ResourceLocationArgument.getId(context, "sound"),
+                                                                                                                                FloatArgumentType.getFloat(context, "volume"),
+                                                                                                                                FloatArgumentType.getFloat(context, "pitch"),
+                                                                                                                                IntegerArgumentType.getInteger(context, "xp"),
+                                                                                                                                StringArgumentType.getString(context, "loot")
+                                                                                                                        ))
+                                                                                                                )
                                                                                                         )
                                                                                                 )
                                                                                         )
@@ -265,19 +268,7 @@ public class MCMCommand {
                                                                                         .then(Commands.argument("sound", ResourceLocationArgument.id()).suggests(SuggestionProviders.AVAILABLE_SOUNDS)
                                                                                                 .then(Commands.argument("volume", FloatArgumentType.floatArg(0))
                                                                                                         .then(Commands.argument("pitch", FloatArgumentType.floatArg(0))
-                                                                                                                .executes(context -> presetModifyAdd(
-                                                                                                                        context,
-                                                                                                                        StringArgumentType.getString(context, "name"),
-                                                                                                                        BlockStateArgument.getBlock(context, "block").getState().getBlock(),
-                                                                                                                        IntegerArgumentType.getInteger(context, "breakingPower"),
-                                                                                                                        DoubleArgumentType.getDouble(context, "blockHealth"),
-                                                                                                                        IntegerArgumentType.getInteger(context, "resonantFrequency"),
-                                                                                                                        ResourceLocationArgument.getId(context, "sound"),
-                                                                                                                        FloatArgumentType.getFloat(context, "volume"),
-                                                                                                                        FloatArgumentType.getFloat(context, "pitch"),
-                                                                                                                        null
-                                                                                                                ))
-                                                                                                                .then(Commands.argument("loot", StringArgumentType.string()).suggests(MCLCommand.SUGGEST_LOOT)
+                                                                                                                .then(Commands.argument("xp", IntegerArgumentType.integer(0))
                                                                                                                         .executes(context -> presetModifyAdd(
                                                                                                                                 context,
                                                                                                                                 StringArgumentType.getString(context, "name"),
@@ -288,8 +279,24 @@ public class MCMCommand {
                                                                                                                                 ResourceLocationArgument.getId(context, "sound"),
                                                                                                                                 FloatArgumentType.getFloat(context, "volume"),
                                                                                                                                 FloatArgumentType.getFloat(context, "pitch"),
-                                                                                                                                StringArgumentType.getString(context, "loot")
+                                                                                                                                IntegerArgumentType.getInteger(context, "xp"),
+                                                                                                                                null
                                                                                                                         ))
+                                                                                                                        .then(Commands.argument("loot", StringArgumentType.string()).suggests(MCLCommand.SUGGEST_LOOT)
+                                                                                                                                .executes(context -> presetModifyAdd(
+                                                                                                                                        context,
+                                                                                                                                        StringArgumentType.getString(context, "name"),
+                                                                                                                                        BlockStateArgument.getBlock(context, "block").getState().getBlock(),
+                                                                                                                                        IntegerArgumentType.getInteger(context, "breakingPower"),
+                                                                                                                                        DoubleArgumentType.getDouble(context, "blockHealth"),
+                                                                                                                                        IntegerArgumentType.getInteger(context, "resonantFrequency"),
+                                                                                                                                        ResourceLocationArgument.getId(context, "sound"),
+                                                                                                                                        FloatArgumentType.getFloat(context, "volume"),
+                                                                                                                                        FloatArgumentType.getFloat(context, "pitch"),
+                                                                                                                                        IntegerArgumentType.getInteger(context, "xp"),
+                                                                                                                                        StringArgumentType.getString(context, "loot")
+                                                                                                                                ))
+                                                                                                                        )
                                                                                                                 )
                                                                                                         )
                                                                                                 )
@@ -424,12 +431,16 @@ public class MCMCommand {
         return 1;
     }
 
-    public static int modifyAdd(CommandContext<CommandSourceStack> context, String name, Block block, int breakingPower, double blockHealth, int resonantFrequency, ResourceLocation breakSound, float volume, float pitch, @Nullable String loot) {
+    public static int modifyAdd(CommandContext<CommandSourceStack> context, String name, Block block, int breakingPower, double blockHealth, int resonantFrequency, ResourceLocation breakSound, float volume, float pitch, int xp, @Nullable String loot) {
         CommandSourceStack source = context.getSource();
         Mining mining = getMining(context);
         if (areaInvalid(name, source, mining)) return 0;
         MiningArea area = mining.areas.get(name);
-        area.types.put(block, new BlockType(breakingPower, blockHealth, resonantFrequency, new SoundInstance(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvent.createVariableRangeEvent(breakSound)), volume, pitch), loot));
+        if (!BuiltInRegistries.SOUND_EVENT.containsKey(breakSound)) {
+            source.sendSystemMessage(Component.literal("§cCould not find sound §a" + breakSound));
+            return 0;
+        }
+        area.types.put(block, new BlockType(breakingPower, blockHealth, resonantFrequency, new SoundInstance(breakSound, volume, pitch), xp, loot));
         source.sendSystemMessage(Component.literal("Set breaking power of ").append(block.getName().withStyle(ChatFormatting.BLUE)).append(Component.literal("§f to §a" + breakingPower + "§f, block health to §a" + blockHealth + "§f and resonant frequency to §a" + resonantFrequency + "§f in area §d" + name)));
         return 1;
     }
@@ -439,7 +450,7 @@ public class MCMCommand {
         Mining mining = getMining(context);
         if (areaInvalid(name, source, mining)) return 0;
         MiningArea area = mining.areas.get(name);
-        area.types.computeIfPresent(block, (k, type) -> new BlockType(type.breakingPower(), type.blockHealth(), type.resonantFrequency(), type.breakSound(), loot));
+        area.types.computeIfPresent(block, (k, type) -> new BlockType(type.breakingPower(), type.blockHealth(), type.resonantFrequency(), type.breakSound(), type.xp(), loot));
         source.sendSystemMessage(Component.literal("Set loot of ").append(block.getName().withStyle(ChatFormatting.BLUE)).append(Component.literal("§f to §a" + loot + "§f in area §d" + name)));
         return 1;
     }
@@ -449,7 +460,7 @@ public class MCMCommand {
         Mining mining = getMining(context);
         if (areaInvalid(name, source, mining)) return 0;
         MiningArea area = mining.areas.get(name);
-        area.types.computeIfPresent(block, (k, type) -> new BlockType(type.breakingPower(), type.blockHealth(), type.resonantFrequency(), type.breakSound(), null));
+        area.types.computeIfPresent(block, (k, type) -> new BlockType(type.breakingPower(), type.blockHealth(), type.resonantFrequency(), type.breakSound(), type.xp(), null));
         source.sendSystemMessage(Component.literal("Removed loot of ").append(block.getName().withStyle(ChatFormatting.BLUE)).append(Component.literal("§f in area §d" + name)));
         return 1;
     }
@@ -586,12 +597,16 @@ public class MCMCommand {
         return 1;
     }
 
-    public static int presetModifyAdd(CommandContext<CommandSourceStack> context, String name, Block block, int breakingPower, double blockHealth, int resonantFrequency, ResourceLocation breakSound, float volume, float pitch, @Nullable String loot) {
+    public static int presetModifyAdd(CommandContext<CommandSourceStack> context, String name, Block block, int breakingPower, double blockHealth, int resonantFrequency, ResourceLocation breakSound, float volume, float pitch, int xp, @Nullable String loot) {
         CommandSourceStack source = context.getSource();
         Mining mining = getMining(context);
         if (presetInvalid(name, source, mining)) return 0;
         HashMap<Block, BlockType> preset = mining.presets.get(name);
-        preset.put(block, new BlockType(breakingPower, blockHealth, resonantFrequency, new SoundInstance(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvent.createVariableRangeEvent(breakSound)), volume, pitch), loot));
+        if (!BuiltInRegistries.SOUND_EVENT.containsKey(breakSound)) {
+            source.sendSystemMessage(Component.literal("§cCould not find sound §a" + breakSound));
+            return 0;
+        }
+        preset.put(block, new BlockType(breakingPower, blockHealth, resonantFrequency, new SoundInstance(breakSound, volume, pitch), xp, loot));
         source.sendSystemMessage(Component.literal("Set breaking power of ").append(block.getName().withStyle(ChatFormatting.BLUE)).append(Component.literal("§f to §a" + breakingPower + "§f, block health to §a" + blockHealth + "§f and resonant frequency to §a" + resonantFrequency + "§f in preset §6" + name)));
         return 1;
     }
@@ -601,7 +616,7 @@ public class MCMCommand {
         Mining mining = getMining(context);
         if (presetInvalid(name, source, mining)) return 0;
         HashMap<Block, BlockType> preset = mining.presets.get(name);
-        preset.computeIfPresent(block, (k, type) -> new BlockType(type.breakingPower(), type.blockHealth(), type.resonantFrequency(), type.breakSound(), loot));
+        preset.computeIfPresent(block, (k, type) -> new BlockType(type.breakingPower(), type.blockHealth(), type.resonantFrequency(), type.breakSound(), type.xp(), loot));
         source.sendSystemMessage(Component.literal("Set loot of ").append(block.getName().withStyle(ChatFormatting.BLUE)).append(Component.literal("§f to §a" + loot + "§f in preset §6" + name)));
         return 1;
     }
@@ -611,7 +626,7 @@ public class MCMCommand {
         Mining mining = getMining(context);
         if (presetInvalid(name, source, mining)) return 0;
         HashMap<Block, BlockType> preset = mining.presets.get(name);
-        preset.computeIfPresent(block, (k, type) -> new BlockType(type.breakingPower(), type.blockHealth(), type.resonantFrequency(), type.breakSound(), null));
+        preset.computeIfPresent(block, (k, type) -> new BlockType(type.breakingPower(), type.blockHealth(), type.resonantFrequency(), type.breakSound(), type.xp(), null));
         source.sendSystemMessage(Component.literal("Removed loot of ").append(block.getName().withStyle(ChatFormatting.BLUE)).append(Component.literal("§f in preset §6" + name)));
         return 1;
     }
@@ -685,7 +700,7 @@ public class MCMCommand {
         for (MiningArea area : areas) {
             IAABB bb = area.bounds;
             bbs.add(bb);
-            BlockState displayState = DISPLAY[bb.hashCode() % DISPLAY.length].defaultBlockState();
+            BlockState displayState = DISPLAY[Math.abs(bb.hashCode()) % DISPLAY.length].defaultBlockState();
             if (player == null) return 0;
             for (int x = bb.minX; x <= bb.maxX; x++)
                 for (int y = bb.minY; y <= bb.maxY; y++)

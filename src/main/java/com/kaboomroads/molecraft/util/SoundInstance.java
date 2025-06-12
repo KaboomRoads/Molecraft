@@ -1,7 +1,6 @@
 package com.kaboomroads.molecraft.util;
 
-import net.minecraft.core.Holder;
-import net.minecraft.sounds.SoundEvent;
+import net.minecraft.resources.ResourceLocation;
 
-public record SoundInstance(Holder<SoundEvent> sound, float volume, float pitch) {
+public record SoundInstance(ResourceLocation sound, float volume, float pitch) {
 }

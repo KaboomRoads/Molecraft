@@ -5,7 +5,6 @@ import net.minecraft.core.HolderGetter;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.block.Block;
 
 import java.util.HashMap;
@@ -71,13 +70,13 @@ public class Mining {
         return tag;
     }
 
-    public static Mining load(CompoundTag tag, HolderGetter<Block> blockLookup, HolderGetter<SoundEvent> soundEventLookup) {
+    public static Mining load(CompoundTag tag, HolderGetter<Block> blockLookup) {
         ListTag areasTag = tag.getList("areas", ListTag.TAG_COMPOUND);
         HashMap<String, MiningArea> loadedAreas = new HashMap<>(areasTag.size());
         for (int i = 0; i < areasTag.size(); i++) {
             CompoundTag entryTag = areasTag.getCompound(i);
             String id = entryTag.getString("id");
-            MiningArea area = MiningArea.load(entryTag.getCompound("area"), blockLookup, soundEventLookup);
+            MiningArea area = MiningArea.load(entryTag.getCompound("area"), blockLookup);
             loadedAreas.put(id, area);
         }
         ListTag presetsTag = tag.getList("presets", ListTag.TAG_COMPOUND);
@@ -85,7 +84,7 @@ public class Mining {
         for (int i = 0; i < presetsTag.size(); i++) {
             CompoundTag entryTag = presetsTag.getCompound(i);
             String id = entryTag.getString("id");
-            HashMap<Block, BlockType> types = MiningArea.loadTypesMap(entryTag.getList("types", Tag.TAG_COMPOUND), blockLookup, soundEventLookup);
+            HashMap<Block, BlockType> types = MiningArea.loadTypesMap(entryTag.getList("types", Tag.TAG_COMPOUND), blockLookup);
             loadedPresets.put(id, types);
         }
         Mining mining = new Mining(loadedAreas, loadedPresets);

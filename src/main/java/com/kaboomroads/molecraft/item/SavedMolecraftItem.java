@@ -4,5 +4,5 @@ import net.minecraft.nbt.CompoundTag;
 
 import java.util.Optional;
 
-public record MolecraftItemInstance(Optional<CompoundTag> tag, int count) {
+public record SavedMolecraftItem(Optional<CompoundTag> tag, int count) {
 }

@@ -4,22 +4,15 @@ import com.kaboomroads.molecraft.entity.PlayerEntity;
 import com.kaboomroads.molecraft.entity.Skin;
 import com.kaboomroads.molecraft.entity.StatType;
 import com.kaboomroads.molecraft.entity.StatsMap;
-import com.kaboomroads.molecraft.loot.Loot;
-import com.kaboomroads.molecraft.loot.LootManager;
 import com.kaboomroads.molecraft.mixinimpl.ModLivingEntity;
-import com.kaboomroads.molecraft.mixinimpl.ModServerLevelData;
+import com.kaboomroads.molecraft.util.MolecraftUtil;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Zombie;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Iterator;
 
 public class MasterModeFloorFour extends Zombie implements PlayerEntity {
     public MasterModeFloorFour(Level level) {
@@ -38,16 +31,7 @@ public class MasterModeFloorFour extends Zombie implements PlayerEntity {
 
     @Override
     protected void dropAllDeathLoot(ServerLevel level, DamageSource damageSource) {
-        LootManager lootManager = ((ModServerLevelData) level.getLevelData()).molecraft$getLootManager();
-        Loot dropLoot = lootManager.get("master_mode_floor_four");
-        Iterator<ItemStack> iterator = dropLoot.collect(random, registryAccess());
-        while (iterator.hasNext()) {
-            ItemStack itemStack = iterator.next();
-            ItemEntity itemEntity = new ItemEntity(level, getX(), getY(), getZ(), itemStack);
-            itemEntity.setDefaultPickUpDelay();
-            if (damageSource.getEntity() instanceof Player player) itemEntity.setTarget(player.getUUID());
-            level.addFreshEntity(itemEntity);
-        }
+        MolecraftUtil.dropEntityLootAndXp(this, level, damageSource, "master_mode_floor_four");
     }
 
     @Override

@@ -5,25 +5,48 @@ import com.kaboomroads.molecraft.item.MolecraftItems;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.util.random.SimpleWeightedRandomList;
+import net.minecraft.util.random.WeightedEntry;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LootManager {
     public final HashMap<String, Loot> lootMap;
 
     public LootManager(HashMap<String, Loot> lootMap) {
         this.lootMap = lootMap;
-        lootMap.put("master_mode_floor_four", new Loot(new HashMap<>(Map.of(
-                "roll", new TreeMap<>(Map.of(
-                        0.5F, new HashSet<>(Set.of(
-                                new MolecraftData(MolecraftItems.REN.id)
-                        ))
-                ))
-        )), false));
-    }
-
-    public LootManager() {
-        this(new HashMap<>());
+        lootMap.put("master_mode_floor_four", Loot.builder(false)
+                .startRoll()
+                .add(1.0F, 1, new MolecraftData(MolecraftItems.CREATION.id))
+                .add(1.0F, 1, new MolecraftData(MolecraftItems.DESTRUCTION.id))
+                .endRoll("roll_1")
+                .build()
+        );
+        lootMap.put("living_mud", Loot.builder(false)
+                .startRoll()
+                .add(0.5F, 1, new MolecraftData(MolecraftItems.MUD.id))
+                .endRoll("roll")
+                .build()
+        );
+        lootMap.put("red_shroomer", Loot.builder(false)
+                .startRoll()
+                .add(0.5F, 1, new MolecraftData(MolecraftItems.RED_MUSHROOM.id))
+                .endRoll("roll")
+                .build()
+        );
+        lootMap.put("brown_shroomer", Loot.builder(false)
+                .startRoll()
+                .add(0.5F, 1, new MolecraftData(MolecraftItems.BROWN_MUSHROOM.id))
+                .endRoll("roll")
+                .build()
+        );
+        lootMap.put("creaking", Loot.builder(false)
+                .startRoll()
+                .add(0.25F, 1, new MolecraftData(MolecraftItems.RESIN.id))
+                .endRoll("roll")
+                .build()
+        );
     }
 
     public Loot get(String id) {
@@ -39,17 +62,22 @@ public class LootManager {
             if (loot.save) {
                 CompoundTag entryTag = new CompoundTag();
                 ListTag lootTag = new ListTag();
-                for (Map.Entry<String, TreeMap<Float, HashSet<MolecraftData>>> rollEntry : loot.rolls.entrySet()) {
+                for (Map.Entry<String, HashMap<Float, SimpleWeightedRandomList<MolecraftData>>> rollEntry : loot.rolls.entrySet()) {
                     CompoundTag rollTag = new CompoundTag();
                     String rollId = rollEntry.getKey();
-                    TreeMap<Float, HashSet<MolecraftData>> rolls = rollEntry.getValue();
+                    HashMap<Float, SimpleWeightedRandomList<MolecraftData>> rolls = rollEntry.getValue();
                     ListTag setTag = new ListTag();
-                    for (Map.Entry<Float, HashSet<MolecraftData>> lootEntry : rolls.entrySet()) {
+                    for (Map.Entry<Float, SimpleWeightedRandomList<MolecraftData>> lootEntry : rolls.entrySet()) {
                         CompoundTag lootEntryTag = new CompoundTag();
                         float chance = lootEntry.getKey();
-                        Set<MolecraftData> drops = lootEntry.getValue();
+                        SimpleWeightedRandomList<MolecraftData> drops = lootEntry.getValue();
                         ListTag dropsTag = new ListTag();
-                        for (MolecraftData data : drops) dropsTag.add(data.save());
+                        for (WeightedEntry.Wrapper<MolecraftData> wrapper : drops.unwrap()) {
+                            CompoundTag wrapperTag = new CompoundTag();
+                            wrapperTag.put("data", wrapper.data().save());
+                            wrapperTag.putInt("weight", wrapper.weight().asInt());
+                            dropsTag.add(wrapperTag);
+                        }
                         lootEntryTag.putFloat("chance", chance);
                         lootEntryTag.put("drops", dropsTag);
                         setTag.add(lootEntryTag);
@@ -79,17 +107,18 @@ public class LootManager {
                 CompoundTag rollTag = (CompoundTag) t2;
                 String rollId = rollTag.getString("id");
                 ListTag setTag = rollTag.getList("entries", Tag.TAG_COMPOUND);
-                TreeMap<Float, HashSet<MolecraftData>> rolls = new TreeMap<>();
+                HashMap<Float, SimpleWeightedRandomList<MolecraftData>> rolls = new HashMap<>();
                 for (Tag t3 : setTag) {
                     CompoundTag lootEntryTag = (CompoundTag) t3;
                     float chance = lootEntryTag.getFloat("chance");
                     ListTag dropsTag = lootEntryTag.getList("drops", Tag.TAG_COMPOUND);
-                    HashSet<MolecraftData> set = new HashSet<>();
+                    SimpleWeightedRandomList.Builder<MolecraftData> builder = new SimpleWeightedRandomList.Builder<>();
                     for (Tag t4 : dropsTag) {
-                        MolecraftData data = MolecraftData.parse((CompoundTag) t4);
-                        if (data != null) set.add(data);
+                        CompoundTag wrapperTag = (CompoundTag) t4;
+                        MolecraftData data = MolecraftData.parse(wrapperTag.getCompound("data"));
+                        if (data != null) builder.add(data, wrapperTag.getInt("weight"));
                     }
-                    rolls.put(chance, set);
+                    rolls.put(chance, builder.build());
                 }
                 loot.rolls.put(rollId, rolls);
             }

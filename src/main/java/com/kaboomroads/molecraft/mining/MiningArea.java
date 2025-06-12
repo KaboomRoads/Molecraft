@@ -11,7 +11,6 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,24 +27,16 @@ public class MiningArea {
     }
 
     @Override
-    public String toString() {
-        return "MiningArea{" +
-                "types=" + types +
-                ", bounds=" + bounds +
-                '}';
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MiningArea area = (MiningArea) o;
-        return Objects.equals(types, area.types) && Objects.equals(bounds, area.bounds);
+        return Objects.equals(bounds, area.bounds);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(types, bounds);
+        return Objects.hash(bounds);
     }
 
     public CompoundTag save() {
@@ -73,18 +64,19 @@ public class MiningArea {
             entryTag.putDouble("block_health", blockType.blockHealth());
             entryTag.putInt("resonant_frequency", blockType.resonantFrequency());
             SoundInstance soundInstance = blockType.breakSound();
-            entryTag.putString("break_sound", soundInstance.sound().getRegisteredName());
+            entryTag.putString("break_sound", soundInstance.sound().toString());
             entryTag.putFloat("break_sound_volume", soundInstance.volume());
             entryTag.putFloat("break_sound_pitch", soundInstance.pitch());
+            entryTag.putInt("xp", blockType.xp());
             entryTag.putString("loot", blockType.loot());
             typesTag.add(entryTag);
         }
         return typesTag;
     }
 
-    public static MiningArea load(CompoundTag tag, HolderGetter<Block> blockLookup, HolderGetter<SoundEvent> soundEventLookup) {
+    public static MiningArea load(CompoundTag tag, HolderGetter<Block> blockLookup) {
         ListTag typesTag = tag.getList("types", Tag.TAG_COMPOUND);
-        HashMap<Block, BlockType> loadedTypes = loadTypesMap(typesTag, blockLookup, soundEventLookup);
+        HashMap<Block, BlockType> loadedTypes = loadTypesMap(typesTag, blockLookup);
         int[] array = tag.getIntArray("bounds");
         IAABB loadedBounds = new IAABB(array[0], array[1], array[2], array[3], array[4], array[5]);
         MiningArea miningArea = new MiningArea(loadedTypes, loadedBounds);
@@ -98,13 +90,13 @@ public class MiningArea {
     }
 
     @NotNull
-    public static HashMap<Block, BlockType> loadTypesMap(ListTag typesTag, HolderGetter<Block> blockLookup, HolderGetter<SoundEvent> soundEventLookup) {
+    public static HashMap<Block, BlockType> loadTypesMap(ListTag typesTag, HolderGetter<Block> blockLookup) {
         HashMap<Block, BlockType> loadedTypes = new HashMap<>(typesTag.size());
         for (int i = 0; i < typesTag.size(); i++) {
             CompoundTag entryTag = typesTag.getCompound(i);
             ResourceLocation resourceLocation = ResourceLocation.parse(entryTag.getString("block"));
             Optional<Holder.Reference<Block>> optional = blockLookup.get(ResourceKey.create(Registries.BLOCK, resourceLocation));
-            loadedTypes.put(optional.get().value(), new BlockType(entryTag.getInt("breaking_power"), entryTag.getDouble("block_health"), entryTag.getInt("resonant_frequency"), new SoundInstance(soundEventLookup.getOrThrow(ResourceKey.create(Registries.SOUND_EVENT, ResourceLocation.parse(entryTag.getString("break_sound")))), entryTag.getFloat("break_sound_volume"), entryTag.getFloat("break_sound_pitch")), entryTag.getString("loot")));
+            loadedTypes.put(optional.get().value(), new BlockType(entryTag.getInt("breaking_power"), entryTag.getDouble("block_health"), entryTag.getInt("resonant_frequency"), new SoundInstance(ResourceLocation.parse(entryTag.getString("break_sound")), entryTag.getFloat("break_sound_volume"), entryTag.getFloat("break_sound_pitch")), entryTag.getInt("xp"), entryTag.getString("loot")));
         }
         return loadedTypes;
     }

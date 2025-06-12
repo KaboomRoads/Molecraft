@@ -6,6 +6,7 @@ import com.kaboomroads.molecraft.loot.LootManager;
 import com.kaboomroads.molecraft.mixinimpl.ModServerLevelData;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -14,10 +15,11 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.random.SimpleWeightedRandomList;
+import net.minecraft.util.random.WeightedEntry;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class MCLCommand {
     public static final SuggestionProvider<CommandSourceStack> SUGGEST_LOOT = (context, builder) -> {
@@ -96,26 +98,32 @@ public class MCLCommand {
                                                         .then(Commands.literal("add")
                                                                 .then(Commands.argument("molecraft_id", StringArgumentType.string()).suggests(MolecraftCommands.SUGGEST_MOLECRAFT_ITEM)
                                                                         .then(Commands.argument("chance", FloatArgumentType.floatArg(0))
-                                                                                .executes(context -> rollSelectAdd(
-                                                                                        context,
-                                                                                        StringArgumentType.getString(context, "id"),
-                                                                                        StringArgumentType.getString(context, "name"),
-                                                                                        new MolecraftData(StringArgumentType.getString(context, "molecraft_id")),
-                                                                                        FloatArgumentType.getFloat(context, "chance")
-                                                                                ))
+                                                                                .then(Commands.argument("weight", IntegerArgumentType.integer(0))
+                                                                                        .executes(context -> rollSelectAdd(
+                                                                                                context,
+                                                                                                StringArgumentType.getString(context, "id"),
+                                                                                                StringArgumentType.getString(context, "name"),
+                                                                                                new MolecraftData(StringArgumentType.getString(context, "molecraft_id")),
+                                                                                                FloatArgumentType.getFloat(context, "chance"),
+                                                                                                IntegerArgumentType.getInteger(context, "weight")
+                                                                                        ))
+                                                                                )
                                                                         )
                                                                 )
                                                         )
                                                         .then(Commands.literal("remove")
                                                                 .then(Commands.argument("molecraft_id", StringArgumentType.string()).suggests(MolecraftCommands.SUGGEST_MOLECRAFT_ITEM)
                                                                         .then(Commands.argument("chance", FloatArgumentType.floatArg(0))
-                                                                                .executes(context -> rollSelectRemove(
-                                                                                        context,
-                                                                                        StringArgumentType.getString(context, "id"),
-                                                                                        StringArgumentType.getString(context, "name"),
-                                                                                        new MolecraftData(StringArgumentType.getString(context, "molecraft_id")),
-                                                                                        FloatArgumentType.getFloat(context, "chance")
-                                                                                ))
+                                                                                .then(Commands.argument("weight", IntegerArgumentType.integer(0))
+                                                                                        .executes(context -> rollSelectRemove(
+                                                                                                context,
+                                                                                                StringArgumentType.getString(context, "id"),
+                                                                                                StringArgumentType.getString(context, "name"),
+                                                                                                new MolecraftData(StringArgumentType.getString(context, "molecraft_id")),
+                                                                                                FloatArgumentType.getFloat(context, "chance"),
+                                                                                                IntegerArgumentType.getInteger(context, "weight")
+                                                                                        ))
+                                                                                )
                                                                         )
                                                                 )
                                                         )
@@ -184,7 +192,7 @@ public class MCLCommand {
         LootManager lootManager = getLootManager(context);
         if (lootInvalid(id, source, lootManager)) return 0;
         lootManager.lootMap.remove(id);
-        source.sendSystemMessage(Component.literal("Removed area §d" + id));
+        source.sendSystemMessage(Component.literal("Removed loot §d" + id));
         return 1;
     }
 
@@ -216,7 +224,7 @@ public class MCLCommand {
             source.sendSystemMessage(Component.literal("§cLoot §d" + id + "§c already contains roll §6" + name));
             return 0;
         }
-        loot.rolls.put(name, new TreeMap<>());
+        loot.rolls.put(name, new HashMap<>());
         source.sendSystemMessage(Component.literal("Added roll §6" + name + "§f to loot §d" + id));
         return 1;
     }
@@ -259,33 +267,42 @@ public class MCLCommand {
         return 1;
     }
 
-    private static int rollSelectAdd(CommandContext<CommandSourceStack> context, String id, String name, MolecraftData molecraftData, float chance) {
+    private static int rollSelectAdd(CommandContext<CommandSourceStack> context, String id, String name, MolecraftData molecraftData, float chance, int weight) {
         CommandSourceStack source = context.getSource();
         LootManager lootManager = getLootManager(context);
         if (lootInvalid(id, source, lootManager)) return 0;
         Loot loot = lootManager.get(id);
         if (rollInvalid(id, loot, name, source)) return 0;
-        TreeMap<Float, HashSet<MolecraftData>> roll = loot.rolls.get(name);
-        HashSet<MolecraftData> drops = roll.getOrDefault(chance, new HashSet<>());
-        drops.add(molecraftData);
-        roll.put(chance, drops);
-        source.sendSystemMessage(Component.literal("Added drop §9" + molecraftData.id() + "§f with chance §a" + chance + "§f to roll §6" + name + "§f in loot §d" + id));
+        HashMap<Float, SimpleWeightedRandomList<MolecraftData>> roll = loot.rolls.get(name);
+        SimpleWeightedRandomList<MolecraftData> list = roll.get(chance);
+        SimpleWeightedRandomList.Builder<MolecraftData> builder = new SimpleWeightedRandomList.Builder<>();
+        if (list != null) for (WeightedEntry.Wrapper<MolecraftData> wrapper : list.unwrap()) builder.add(wrapper.data(), wrapper.weight().asInt());
+        builder.add(molecraftData);
+        roll.put(chance, builder.build());
+        source.sendSystemMessage(Component.literal("Added drop §9" + molecraftData.id() + "§f with chance §a" + chance + "§f and weight §a" + weight + "§f to roll §6" + name + "§f in loot §d" + id));
         return 1;
     }
 
-    private static int rollSelectRemove(CommandContext<CommandSourceStack> context, String id, String name, MolecraftData molecraftData, float chance) {
+    private static int rollSelectRemove(CommandContext<CommandSourceStack> context, String id, String name, MolecraftData molecraftData, float chance, int weight) {
         CommandSourceStack source = context.getSource();
         LootManager lootManager = getLootManager(context);
         if (lootInvalid(id, source, lootManager)) return 0;
         Loot loot = lootManager.get(id);
         if (rollInvalid(id, loot, name, source)) return 0;
-        TreeMap<Float, HashSet<MolecraftData>> roll = loot.rolls.get(name);
-        if (!roll.containsKey(chance) || !roll.get(chance).contains(molecraftData)) {
-            source.sendSystemMessage(Component.literal("§cCouldn't find drop §9" + molecraftData.id() + "§c with chance §a" + chance + "§c in roll §6" + name + "§c in loot §d" + id));
+        HashMap<Float, SimpleWeightedRandomList<MolecraftData>> roll = loot.rolls.get(name);
+        SimpleWeightedRandomList<MolecraftData> list = roll.get(chance);
+        if (list == null || list.unwrap().stream().noneMatch(wrapper -> molecraftData.is(wrapper.data()) && weight == wrapper.weight().asInt())) {
+            source.sendSystemMessage(Component.literal("§cCouldn't find drop §9" + molecraftData.id() + "§c with chance §a" + chance + "§c and weight §a" + weight + "§c in roll §6" + name + "§c in loot §d" + id));
             return 0;
         }
-        roll.get(chance).remove(molecraftData);
-        source.sendSystemMessage(Component.literal("Removed drop §9" + molecraftData.id() + "§f with chance §a" + chance + "§f from roll §6" + name + "§f in loot §d" + id));
+        SimpleWeightedRandomList.Builder<MolecraftData> builder = new SimpleWeightedRandomList.Builder<>();
+        for (WeightedEntry.Wrapper<MolecraftData> wrapper : list.unwrap())
+            if (!molecraftData.is(wrapper.data()) && weight != wrapper.weight().asInt())
+                builder.add(wrapper.data(), wrapper.weight().asInt());
+        SimpleWeightedRandomList<MolecraftData> newList = builder.build();
+        if (newList.isEmpty()) roll.remove(chance);
+        else roll.put(chance, newList);
+        source.sendSystemMessage(Component.literal("Removed drop §9" + molecraftData.id() + "§f with chance §a" + chance + "§f and weight §a" + weight + "§f from roll §6" + name + "§f in loot §d" + id));
         return 1;
     }
 
@@ -307,10 +324,10 @@ public class MCLCommand {
         Loot loot = lootManager.get(id);
         if (rollInvalid(id, loot, name, source)) return 0;
         source.sendSystemMessage(Component.literal("Contents of roll §6" + name + "§f:"));
-        for (Map.Entry<Float, HashSet<MolecraftData>> entry : loot.rolls.get(name).entrySet()) {
+        for (Map.Entry<Float, SimpleWeightedRandomList<MolecraftData>> entry : loot.rolls.get(name).entrySet()) {
             float chance = entry.getKey();
-            HashSet<MolecraftData> drops = entry.getValue();
-            for (MolecraftData molecraftData : drops) source.sendSystemMessage(Component.literal("§9" + molecraftData.id() + "§f with chance §a" + chance));
+            SimpleWeightedRandomList<MolecraftData> drops = entry.getValue();
+            for (WeightedEntry.Wrapper<MolecraftData> wrapper : drops.unwrap()) source.sendSystemMessage(Component.literal("§9" + wrapper.data().id() + "§f with chance §a" + chance + "§f and weight §a" + wrapper.weight().asInt()));
         }
         return 1;
     }
@@ -321,7 +338,7 @@ public class MCLCommand {
         if (lootInvalid(id, source, lootManager)) return 0;
         Loot loot = lootManager.get(id);
         if (rollInvalid(id, loot, name, source)) return 0;
-        TreeMap<Float, HashSet<MolecraftData>> roll = loot.rolls.get(name);
+        HashMap<Float, SimpleWeightedRandomList<MolecraftData>> roll = loot.rolls.get(name);
         loot.rolls.remove(name);
         loot.rolls.put(newName, roll);
         source.sendSystemMessage(Component.literal("Renamed roll §6" + name + "§f in loot §d" + id + "§f to §6" + newName));

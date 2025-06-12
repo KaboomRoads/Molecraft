@@ -2,12 +2,14 @@ package com.kaboomroads.molecraft.entity;
 
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.TreeMap;
 
 public class StatInstance {
     public StatType type;
     public double baseValue;
     public double cachedValue;
-    public final HashMap<String, Double> modifiers = new HashMap<>();
+    private final HashMap<String, StatModifier> modifiersById = new HashMap<>();
+    private final TreeMap<StatModifier.Operation, HashMap<String, StatModifier>> modifiersByOperation = new TreeMap<>();
 
     public StatInstance(StatType type, double baseValue) {
         this.type = type;
@@ -17,7 +19,20 @@ public class StatInstance {
 
     public void addUpModifiers() {
         cachedValue = baseValue;
-        for (Double value : modifiers.values()) cachedValue += value;
+        for (HashMap<String, StatModifier> map : modifiersByOperation.values())
+            for (StatModifier modifier : map.values())
+                modifier.modify(this);
+    }
+
+    public void putModifier(String id, double value, StatModifier.Operation operation) {
+        StatModifier modifier = new StatModifier(id, value, operation);
+        modifiersById.put(id, modifier);
+        modifiersByOperation.computeIfAbsent(operation, m -> new HashMap<>()).put(id, modifier);
+    }
+
+    public void removeModifier(String id) {
+        StatModifier modifier = modifiersById.remove(id);
+        if (modifier != null) modifiersByOperation.get(modifier.operation()).remove(id);
     }
 
     @Override

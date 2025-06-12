@@ -3,6 +3,7 @@ package com.kaboomroads.molecraft.entity;
 import java.util.TreeMap;
 
 public class StatsMap {
+    public boolean hits = false;
     public final TreeMap<StatType, StatInstance> map;
 
     public StatsMap(TreeMap<StatType, StatInstance> map) {

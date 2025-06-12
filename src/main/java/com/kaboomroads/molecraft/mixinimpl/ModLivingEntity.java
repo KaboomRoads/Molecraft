@@ -1,11 +1,12 @@
 package com.kaboomroads.molecraft.mixinimpl;
 
+import com.kaboomroads.molecraft.entity.AbilitiesMap;
 import com.kaboomroads.molecraft.entity.StatsMap;
 
 public interface ModLivingEntity extends ModEntity {
     StatsMap molecraft$getStats();
-
-    void molecraft$setStats(StatsMap statsMap);
+    
+    AbilitiesMap molecraft$getEnchants();
 
     StatsMap.Builder molecraft$initStats();
 
@@ -13,7 +14,5 @@ public interface ModLivingEntity extends ModEntity {
 
     void molecraft$setHealth(double health);
 
-    double molecraft$getMana();
-
-    void molecraft$setMana(double mana);
+    void molecraft$makeStuck(int ticks);
 }

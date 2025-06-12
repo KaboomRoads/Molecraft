@@ -1,6 +1,7 @@
 package com.kaboomroads.molecraft.item;
 
 import com.kaboomroads.molecraft.entity.StatType;
+import com.kaboomroads.molecraft.item.ability.core.MolecraftEnchants;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
@@ -42,10 +43,50 @@ public class MolecraftItems {
             .lore("The Bing...", ChatFormatting.DARK_GRAY)
             .lore(MolecraftItem.STATS)
             .lore()
+            .lore(MolecraftItem.ABILITIES)
+            .lore()
+            .lore(MolecraftItem.ENCHANTS)
+            .lore()
             .lore("How Bingulous", ChatFormatting.DARK_AQUA, ChatFormatting.UNDERLINE)
             .lore()
             .lore(Component.literal("zoinks").withColor(0x32A852).withStyle(ChatFormatting.ITALIC))
             .lore(Component.literal("clean"))
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem DESTRUCTION = register(MolecraftItem.builder("destruction",
+                    "Destruction",
+                    Rarity.ADMIN,
+                    ItemType.SWORD,
+                    Items.NETHERITE_SWORD,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .stat(StatType.DAMAGE, Double.MAX_VALUE)
+            .lore("Florgus...", ChatFormatting.DARK_GRAY)
+            .lore(MolecraftItem.STATS)
+            .lore()
+            .lore(MolecraftItem.ABILITIES)
+            .lore()
+            .lore(MolecraftItem.ENCHANTS)
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem FISH_INGROD = register(MolecraftItem.builder("fish_ingrod",
+                    "Fish Ingrod",
+                    Rarity.ADMIN,
+                    ItemType.FISHING_ROD,
+                    Items.COD,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .allowUse()
+            .stat(StatType.REEL_STRENGTH, 100.0)
+            .stat(StatType.FISHING_LUCK, 50.0)
+            .ability(MolecraftEnchants.IGNITING)
+            .lore(MolecraftItem.STATS)
+            .lore()
+            .lore(MolecraftItem.ABILITIES)
+            .lore()
+            .lore(MolecraftItem.ENCHANTS)
+            .lore()
             .lore(MolecraftItem.RARITY)
             .build());
     public static MolecraftItem BOOT = register(MolecraftItem.builder("boot",
@@ -74,6 +115,10 @@ public class MolecraftItems {
             .stat(StatType.MANA_REGEN, 10.0)
             .lore(MolecraftItem.STATS)
             .lore()
+            .lore(MolecraftItem.ABILITIES)
+            .lore()
+            .lore(MolecraftItem.ENCHANTS)
+            .lore()
             .lore(MolecraftItem.RARITY)
             .build());
     public static MolecraftItem REN = register(MolecraftItem.builder("ren",
@@ -92,8 +137,113 @@ public class MolecraftItems {
             .lore(MolecraftItem.STATS)
             .lore(MolecraftItem.STATS)
             .lore()
+            .lore(MolecraftItem.ABILITIES)
+            .lore()
+            .lore(MolecraftItem.ENCHANTS)
+            .lore()
             .lore(MolecraftItem.RARITY)
             .soulbound()
+            .build());
+    public static MolecraftItem STONE = register(MolecraftItem.builder("stone",
+                    "Stone",
+                    Rarity.COMMON,
+                    ItemType.NONE,
+                    Items.COBBLESTONE,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("Rock and stone.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem PALEROCK = register(MolecraftItem.builder("palerock",
+                    "Palerock",
+                    Rarity.RARE,
+                    ItemType.NONE,
+                    Items.FIREWORK_STAR,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("Pale and cold.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem MUD = register(MolecraftItem.builder("mud",
+                    "Mud",
+                    Rarity.COMMON,
+                    ItemType.NONE,
+                    Items.MUD,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("It's just sludge.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem RED_MUSHROOM = register(MolecraftItem.builder("red_mushroom",
+                    "Red Mushroom",
+                    Rarity.COMMON,
+                    ItemType.NONE,
+                    Items.RED_MUSHROOM,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("Do not eat this.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem BROWN_MUSHROOM = register(MolecraftItem.builder("brown_mushroom",
+                    "Brown Mushroom",
+                    Rarity.COMMON,
+                    ItemType.NONE,
+                    Items.BROWN_MUSHROOM,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("Inedible.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem RESIN = register(MolecraftItem.builder("resin",
+                    "Resin",
+                    Rarity.UNCOMMON,
+                    ItemType.NONE,
+                    Items.RESIN_CLUMP,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("Tastes bitter.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem COAL = register(MolecraftItem.builder("coal",
+                    "Coal",
+                    Rarity.COMMON,
+                    ItemType.NONE,
+                    Items.COAL,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("They say this burns well.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem IRON = register(MolecraftItem.builder("iron",
+                    "Iron",
+                    Rarity.COMMON,
+                    ItemType.NONE,
+                    Items.IRON_INGOT,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("How is it so shiny,")
+            .lore("I literally just pulled")
+            .lore("it out of this rock.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
+            .build());
+    public static MolecraftItem COPPER = register(MolecraftItem.builder("copper",
+                    "Copper",
+                    Rarity.COMMON,
+                    ItemType.NONE,
+                    Items.COPPER_INGOT,
+                    EquipmentSlotGroup.MAINHAND
+            )
+            .lore("Nice conductor.")
+            .lore()
+            .lore(MolecraftItem.RARITY)
             .build());
 
     public static MolecraftItem register(MolecraftItem item) {
